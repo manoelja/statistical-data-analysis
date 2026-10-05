@@ -1,0 +1,34 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Environment
+.env
+.env.*
+
+# Coverage
+coverage
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+Thumbs.db
+
+# Dados SINASC (base completa tem 35 MB — versionar só a amostra)
+nascidos_vivos_2024.csv
+amostra_200.csv
+
+# R (material de origem)
+.RData
+.RDataTmp
+.Rhistory
+.Rproj.user/
+*.pdf

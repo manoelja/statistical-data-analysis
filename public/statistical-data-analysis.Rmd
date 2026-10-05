@@ -1,0 +1,408 @@
+---
+title: "Probabilidade e Inferência Estatística"
+subtitle: "Parte 1: Probabilidade | Parte 2: Inferência Estatística"
+date: "22/08/2026"
+output: pdf_document
+header-includes:
+   - \usepackage{array}
+   - \usepackage{longtable}
+   - \usepackage[brazil]{babel}
+   
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+options(scipen = 999)
+
+# Função auxiliar: números no padrão brasileiro (vírgula decimal)
+num <- function(x, d = 4) {
+  formatC(x, format = "f", digits = d, decimal.mark = ",")
+}
+
+# Amostra aleatória simples de tamanho 200
+d1 <- read.csv("amostra_200.csv", sep = ";", header = TRUE)
+```
+
+# Introdução 
+
+Este documento é dividido em duas partes, a primeira envolvendo questões relacionadas a probabilidade, e a segunda, com questões de inferência estatística. 
+
+\vspace{0.3cm}
+
+**Observação metodológica:** em todos os cálculos da Parte 2 foram adotados o nível de confiança de 95\% e o nível de significância de 5\%. Na variável APGAR1, o valor `99` (código de ``ignorado'' do SINASC, incompatível com a escala de 0 a 10) e as observações ausentes foram tratados como dados faltantes e excluídos das análises; na variável PESO foram excluídas apenas as observações ausentes.
+
+## Parte 1 
+
+**Questão 1** Uma fábrica de equipamentos informa que 2% dos dispositivos produzidos apresentam algum defeito de fabricação, sendo que os defeitos podem ser considerados independentes de um equipamento para outro. 
+
+\vspace{0.2cm}
+
+(a) Uma empresa adquiriu 3 equipamentos dessa fábrica para uso em uma nova unidade. Qual é a probabilidade de que os três equipamentos adquiridos apresentem defeito?
+
+```{r q1a}
+p_1a <- dbinom(x = 3, size = 3, prob = 0.02)
+cat("P(X = 3):", format(p_1a, scientific = FALSE), "ou", sprintf("%.4f%%", p_1a * 100), "\n")
+```
+Resposta: A probabilidade de os três equipamentos adquiridos apresentarem defeito é de $0{,}000008$ (ou $0{,}0008\%$).
+
+\vspace{0.2cm}
+
+(b) Um gestor afirma:
+
+\vspace{0.2cm}
+
+\emph{``Se os três equipamentos que comprei vieram com defeito, isso pode ser explicado apenas pela variabilidade aleatória e não necessariamente indica que a taxa de defeitos do fabricante seja diferente da informada.''}
+
+\vspace{0.2cm}
+
+Com base nos resultados obtidos, você concorda com essa afirmação? Justifique utilizando probabilidade.
+
+```{r q1b}
+cat("P(X = 3):", format(p_1a, scientific = FALSE), "ou", sprintf("%.4f%%", p_1a * 100), "\n")
+```
+
+Resposta: Não concordo com a afirmação do gestor.
+Justificativa: A probabilidade de adquirir 3 equipamentos e todos apresentarem defeito por mero acaso — assumindo que a taxa do fabricante seja de apenas 2% ($p = 0{,}02$) — é de $0{,}000008$ (ou $0{,}0008\%$). Por ser um valor extremamente próximo de zero, trata-se de um evento praticamente impossível de ser atribuído unicamente à variabilidade aleatória do processo. Esse resultado indica que a verdadeira taxa de defeitos do fabricante é superior aos 2% informados.
+
+\vspace{0.2cm}
+
+(c) Considere agora uma compra de 20 equipamentos. Qual é a probabilidade de que pelo menos um deles apresente defeito?
+
+Observação: Utilize a distribuição Binomial.
+
+```{r q1c}
+# P(X >= 1) = 1 - P(X = 0) para n = 20 e p = 0.02
+p_1c <- pbinom(q = 0, size = 20, prob = 0.02, lower.tail = FALSE)
+cat("P(X >= 1):", num(p_1c, 4), "ou", num(p_1c * 100, 2), "%\n")
+```
+
+Resposta: A probabilidade de que pelo menos um equipamento apresente defeito em um lote de 20 unidades é de aproximadamente 0,3324 (ou 33,24\%), resultado obtido pelo complementar: $P(X \geq 1) = 1 - P(X = 0)$. Isso significa que, em cerca de um terço das compras de 20 equipamentos, haveria ao menos um item defeituoso — um número bem mais alto do que a intuição sugere quando se pensa em uma taxa de defeito de apenas 2\%.
+
+\vspace{0.2cm}
+
+\textbf{Questão 2} O número de recém-nascidos admitidos por hora em uma maternidade segue aproximadamente uma distribuição de Poisson com média de 4 admissões por hora.
+
+\vspace{0.2cm}
+
+(a) Qual é a probabilidade de ocorrerem exatamente 4 admissões em uma determinada hora?
+
+```{r q2a}
+p_2a <- dpois(x = 4, lambda = 4)
+cat("P(X = 4):", num(p_2a, 4), "ou", num(p_2a * 100, 2), "%\n")
+```
+
+Resposta: Sendo $X$ o número de admissões por hora, com $X \sim \text{Poisson}(\lambda = 4)$,
+$$P(X = 4) = \frac{e^{-4}\,4^{4}}{4!} \approx 0{,}1954,$$
+isto é, aproximadamente 19,54\%. Esse é o valor modal da distribuição, ou seja, o número de admissões mais provável de se observar em uma hora.
+
+\vspace{0.2cm}
+
+(b) Em um determinado plantão foi observado o registro de 14 admissões em uma única hora. O coordenador da maternidade afirma:
+
+\vspace{0.2cm}
+
+\emph{``Esse resultado é tão improvável que provavelmente ocorreu algum problema no registro dos dados.''}
+
+\vspace{0.2cm}
+
+Avalie essa afirmação.
+
+Observação: Utilize a distribuição de Poisson.
+
+```{r q2b}
+p_2b      <- dpois(x = 14, lambda = 4)                     # P(X = 14)
+p_2b_mais <- ppois(q = 13, lambda = 4, lower.tail = FALSE)  # P(X >= 14)
+cat("P(X = 14):", format(p_2b, scientific = TRUE), "=", num(p_2b, 8), "\n")
+cat("P(X >= 14):", format(p_2b_mais, scientific = TRUE), "=", num(p_2b_mais, 8), "\n")
+cat("1 em cada", format(round(1 / p_2b_mais), big.mark = "."), "horas\n")
+cat("Esperado em 1 ano (8760 h):", num(p_2b_mais * 8760, 2), "hora(s)\n")
+```
+
+Resposta: Não concordo integralmente com a afirmação do coordenador.
+Justificativa: sob o modelo Poisson com média 4, a probabilidade de ocorrerem exatamente 14 admissões em uma hora é de aproximadamente $5{,}64 \times 10^{-5}$, e a probabilidade de ocorrerem \textbf{14 ou mais} admissões é de aproximadamente $7{,}63 \times 10^{-5}$ — isto é, cerca de 1 hora em cada 13.101. Trata-se, portanto, de um evento \emph{muito raro}, mas não impossível: em um ano de 8.760 horas, o número esperado de horas com 14 ou mais admissões é de aproximadamente 0,67, o que equivale a dizer que, em média, um registro desse tipo deveria ocorrer cerca de uma vez a cada ano e meio.
+
+Assim, o resultado \textbf{é compatível} com a variabilidade natural de um processo de Poisson com média 4 e a raridade do evento, por si só, não demonstra que tenha havido erro de registro. É razoável, por cautela, conferir o registro, mas afirmar que ``provavelmente houve erro'' seria um exagero: para sustentar essa conclusão seria necessário observar um \emph{padrão sistemático} de valores extremos, e não um único caso isolado.
+
+\vspace{0.2cm}
+
+\textbf{Questão 3} Considere que o peso ao nascer dos recém-nascidos de determinada região possa ser aproximado por uma distribuição Normal com média igual a 3,250 kg e desvio-padrão de 0,500 kg. 
+
+\vspace{0.2cm}
+
+(a) Qual é a probabilidade de um recém-nascido apresentar peso inferior a 2,500 kg?
+
+(b) Qual é a probabilidade de um recém-nascido apresentar peso entre 3,000 kg e 4,000 kg?
+
+(c) Em uma maternidade com aproximadamente 8.000 nascimentos por ano, estime quantos recém-nascidos apresentariam peso inferior a 2,500 kg ao longo de um ano.
+
+```{r q3}
+# X ~ Normal(mu = 3250 g; sd = 500 g)
+p_3a <- pnorm(2500, mean = 3250, sd = 500)
+p_3b <- pnorm(4000, mean = 3250, sd = 500) - pnorm(3000, mean = 3250, sd = 500)
+p_3c <- p_3a * 8000
+
+cat("3a) P(X < 2500)        =", num(p_3a, 4), "ou", num(p_3a * 100, 2), "%  (z =", num((2500 - 3250) / 500, 1), ")\n")
+cat("3b) P(3000 < X < 4000) =", num(p_3b, 4), "ou", num(p_3b * 100, 2), "%  (z1 =", num((3000 - 3250) / 500, 1), "; z2 =", num((4000 - 3250) / 500, 1), ")\n")
+cat("3c) Esperado em 8000 nascimentos =", num(p_3c, 2), "=>", round(p_3c), "recém-nascidos\n")
+```
+
+Resposta:
+
+(a) Padronizando a variável, obtém-se $z = -1{,}5$. Portanto,
+$$P(X < 2500) = P(Z < -1{,}5) = 0{,}0668.$$
+A probabilidade de um recém-nascido apresentar peso inferior a 2.500 g é de aproximadamente 0,0668, ou seja, 6,68\%.
+
+(b) Com $z_1 = -0{,}5$ e $z_2 = 1{,}5$, tem-se
+$$P(3000 < X < 4000) = P(-0{,}5 < Z < 1{,}5) = 0{,}9332 - 0{,}3085 = 0{,}6247.$$
+A probabilidade é de aproximadamente 0,6247, isto é, 62,47\%.
+
+(c) Multiplicando a probabilidade obtida em (a) pelo número de nascimentos:
+$$8000 \times 0{,}0668 = 534{,}46.$$
+Estima-se, portanto, que aproximadamente \textbf{534} recém-nascidos por ano apresentem peso inferior a 2.500 g (cerca de 6,68\% dos nascimentos). Vale destacar que esse valor é apenas uma \emph{estimativa} (o valor esperado), pois o número efetivamente observado varia de ano para ano.
+
+\vspace{0.4cm}
+
+## Parte 2                                                         
+
+### Conjunto de dados - Nascidos Vivos 2024 (DataSUS)
+
+O conjunto de dados que será utilizado nesta atividade foi obtido no Portal de Dados Aberto do SUS e consiste da base de informações sobre nascidos vivos em 2024, registrados no Sistema de Informação sobre Nascidos Vivos – Sinasc. Esse conjunto de dados foi obtido pelo link \texttt{https://dadosabertos.saude.gov.br/dataset/sistema-de-informacao-sobre-nascidos-vivos-sinasc} (acesso e download em 14/08/2026), onde também encontramos seu respectivo dicionário de dados. 
+
+\vspace{0.5cm}
+
+Devido ao tamanho do arquivo original, serão disponibilizados dois arquivos de tamanho menor para facilitar a manipulação, são eles: 
+
+- nascidos\_vivos\_2024.csv: base de dados que contempla todas as observações e apenas as variáveis de interesse para a atividade
+
+- amostra\_200.csv: amostra aleatória simples de tamanho 200 que foi obtida a partir da base completa. 
+
+As variávies que estão nos arquivos são detalhadas a seguir.
+
+\vspace{0.2cm}
+
+\begin{center}
+    \begin{longtable}{l|l}
+        \caption{Variáveis do conjunto de dados}\\
+        \hline
+        \textbf{Nome da variável} & \textbf{Descrição}  \\
+        \hline
+     APGAR1        &  Apgar no primeiro minuto, 00 a 10  \\
+     PESO          &  Peso ao nascer, em gramas          \\
+\hline
+\end{longtable}
+\end{center}
+
+\vspace{0.3cm}
+
+**Questão 4** O índice de Apgar varia de 0 a 10 e é utilizado para avaliar as condições do recém-nascido logo após o nascimento. Valores entre 7 e 10 são geralmente considerados normais.
+
+Considere a amostra de nascidos vivos fornecida para responder os intes (a), (b) e (c).
+
+(a) Calcule a estimativa pontual da média populacional do índice Apgar no 1º minuto.
+
+(b) Construa um intervalo de confiança de 95% para a média populacional do índice Apgar no 1º minuto. Verifique os requisitos para o cálculo do intervalo de confiança.
+
+(c) É possível afirmar que o valor médio da avaliação APGAR1 é igual a 7? Considerando um nível de significância de 5\%. Verifique os requisitos para realizar o teste de hipóteses.
+
+(d) Utilizando a base completa dos nascidos vivos de 2024, obtenha o verdadeiro valor da média populacional e compare-o com a estimativa pontual e com o intervalo de confiança construído (o parâmetro populacional pertence ao intervalo de confiança?). 
+
+```{r q4ab}
+apgar <- d1$APGAR1
+apgar[apgar == 99] <- NA          # código "ignorado" do SINASC
+n_apgar     <- sum(!is.na(apgar))
+media_apgar <- mean(apgar, na.rm = TRUE)
+sd_apgar    <- sd(apgar, na.rm = TRUE)
+se_apgar    <- sd_apgar / sqrt(n_apgar)
+t_crit      <- qt(0.975, df = n_apgar - 1)
+ic_apgar    <- media_apgar + c(-1, 1) * t_crit * se_apgar
+assim_apgar <- mean((apgar - media_apgar)^3, na.rm = TRUE) / sd_apgar^3
+
+cat("n válido    :", n_apgar, "\n")
+cat("media (xbarra):", num(media_apgar, 4), "\n")
+cat("desvio (s)  :", num(sd_apgar, 4), "\n")
+cat("erro padrão :", num(se_apgar, 4), "\n")
+cat("t crítico (gl =", n_apgar - 1, "):", num(t_crit, 4), "\n")
+cat("IC 95%      : [", num(ic_apgar[1], 4), ";", num(ic_apgar[2], 4), "]\n")
+cat("assimetria  :", num(assim_apgar, 3), "| n >= 30?", n_apgar >= 30, "\n")
+```
+
+Resposta:
+
+(a) A estimativa pontual da média populacional do índice APGAR1 é a média amostral. Após a exclusão do código 99 e do valor ausente, restaram `r n_apgar` observações válidas, obtendo-se
+$$\bar{x} = 8{,}2778.$$
+
+(b) Como o desvio-padrão populacional é desconhecido, utiliza-se a distribuição $t$ de Student com $n - 1 = 197$ graus de liberdade:
+$$\bar{x} \pm t_{0{,}975;\,197} \cdot \frac{s}{\sqrt{n}}
+\quad\Longrightarrow\quad
+8{,}2778 \pm 1{,}9721 \times 0{,}1032
+\quad\Longrightarrow\quad
+IC_{95\%} = [8{,}0742;\ 8{,}4814].$$
+
+\textbf{Verificação dos requisitos:} (i) os dados provêm de uma amostra aleatória simples de 200 nascidos vivos, o que garante a independência das observações; (ii) o tamanho da amostra é grande ($n = 198 \geq 30$), de modo que o Teorema Central do Limite assegura que a distribuição amostral da média é aproximadamente normal, ainda que a distribuição do APGAR1 seja discreta e assimétrica à esquerda (assimetria $\approx -2{,}474$, com forte concentração nos valores 8 e 9) e que existam valores extremos (1 a 5); (iii) o desvio-padrão populacional é desconhecido, o que justifica o uso da distribuição $t$. Os requisitos estão, portanto, satisfeitos.
+
+(c) Formulação do teste:
+$$H_0: \mu = 7 \qquad \text{versus} \qquad H_1: \mu \neq 7, \qquad \alpha = 0{,}05.$$
+
+```{r q4c}
+teste_apgar <- t.test(apgar, mu = 7)
+cat("t =", num(as.numeric(teste_apgar$statistic), 4),
+    "| gl =", as.numeric(teste_apgar$parameter),
+    "| p-valor =", format(teste_apgar$p.value, scientific = TRUE), "\n")
+cat("t critico (bilateral): +/-", num(qt(0.975, df = n_apgar - 1), 4), "\n")
+```
+
+Resposta: \textbf{Não} é possível afirmar que o valor médio do APGAR1 seja igual a 7.
+Justificativa: a estatística de teste é
+$$t = \frac{\bar{x} - \mu_0}{s/\sqrt{n}} = \frac{8{,}2778 - 7}{0{,}1032} \approx 12{,}377,$$
+com 197 graus de liberdade e p-valor $\approx 2{,}10 \times 10^{-26}$, muito menor que $\alpha = 0{,}05$ (a estatística $t$ está muito além do valor crítico $\pm 1{,}9721$). Rejeita-se, portanto, $H_0$: há evidência estatística muito forte de que o valor médio do APGAR1 \textbf{difere} de 7, sendo, na verdade, \emph{superior} a esse valor. Como o intervalo de confiança obtido em (b) não contém o valor 7, as duas abordagens — intervalo de confiança e teste de hipóteses — conduzem à mesma conclusão.
+
+Os requisitos são os mesmos verificados em (b): amostra aleatória simples, observações independentes e $n = 198 \geq 30$ (Teorema Central do Limite), o que valida o uso do teste $t$.
+
+(d) 
+
+```{r q4d}
+library(data.table)
+d2 <- fread("nascidos_vivos_2024.csv", sep = ";", header = TRUE,
+            na.strings = c("NA", ""))
+apgar_pop <- d2$APGAR1
+apgar_pop[apgar_pop == 99] <- NA
+media_pop_apgar <- mean(apgar_pop, na.rm = TRUE)
+n_pop_apgar     <- sum(!is.na(apgar_pop))
+ic_cobre        <- media_pop_apgar >= ic_apgar[1] && media_pop_apgar <= ic_apgar[2]
+
+cat("Observações na base (bruto):", nrow(d2), "\n")
+cat("N populacional válido      :", n_pop_apgar, "\n")
+cat("Media populacional (mu)     :", num(media_pop_apgar, 4), "\n")
+cat("Estimativa amostral (xbarra):", num(media_apgar, 4), "\n")
+cat("Erro amostral               :", num(media_apgar - media_pop_apgar, 4), "\n")
+cat("IC 95% amostral            : [", num(ic_apgar[1], 4), ";", num(ic_apgar[2], 4), "]\n")
+cat("O parâmetro pertence ao IC?", ifelse(ic_cobre, "SIM", "NÃO"), "\n")
+```
+
+Resposta: Considerando a base completa (2.389.325 nascidos vivos, dos quais 2.363.658 com informação válida de APGAR1), o verdadeiro valor da média populacional é
+$$\mu = 8{,}3075.$$
+A comparação com os resultados amostrais está resumida a seguir.
+
+\begin{center}
+\begin{tabular}{l|c}
+\hline
+\textbf{Quantidade} & \textbf{Valor} \\
+\hline
+Estimativa pontual ($\bar{x}$)   & 8,2778 \\
+Média populacional ($\mu$)       & 8,3075 \\
+Erro amostral ($\bar{x} - \mu$)  & $-0{,}0297$ \\
+IC 95\%                          & $[8{,}0742;\ 8{,}4814]$ \\
+\hline
+\end{tabular}
+\end{center}
+
+A estimativa pontual obtida na amostra (8,2778) ficou muito próxima do parâmetro populacional (8,3075), com erro amostral de apenas $-0{,}0297$ — cerca de 0,36\% do valor da média. Além disso, o valor de $\mu$ \textbf{pertence} ao intervalo de confiança de 95\% construído na amostra, exatamente como esperado. Esse é o significado da confiança de 95\%: se repetíssemos o processo de amostragem muitas vezes e construíssemos um intervalo a cada vez, cerca de 95\% desses intervalos conteriam o verdadeiro parâmetro $\mu$, e o intervalo obtido nesta amostra específica foi um desses.
+
+\vspace{0.3cm}
+
+\textbf{Questão 5} Em alguns estudos, um recém-nascido é considerado de baixo peso ao nascer quando apresenta peso inferior a 2,500 kg.
+
+Considere a amostra de nascidos vivos fornecida para responder os intes (a), (b) e (c).
+
+(a) Construa uma variável que indique sucesso (1) para recém-nascidos com peso maior ou igual a 2,500 kg, e fracasso (0), caso contrário. 
+
+(b) Obtenha a estimativa da proporção de recém-nascidos com peso maior ou igual a 2,500 kg. Construa um intervalo de confiança de 95\% para a proporção em questão. Verifique os requisitos para o cálculo do intervalo de confiança.
+
+(c) É possível afirmar que a proporção de recém-nascidos com peso maior ou igual a 2,500 kg é de 90\%?  Considerando um nível de significância de 5\%. Verifique os requisitos para realizar o teste de hipóteses. 
+
+(d) Utilizando a base completa dos nascidos vivos de 2024, obtenha a verdadeira proporção de recém-nascidos com peso maior ou igual a 2,500 kg e compare-o com a estimativa pontual e com o intervalo de confiança construído (o parâmetro populacional pertence ao intervalo de confiança?). 
+
+```{r q5ab}
+# (a) Variável indicadora: 1 = peso >= 2500 g (sucesso); 0 = caso contrário
+d1$PESO_2500 <- ifelse(d1$PESO >= 2500, 1, 0)
+
+n_peso   <- sum(!is.na(d1$PESO))
+sucessos <- sum(d1$PESO_2500, na.rm = TRUE)
+phat     <- sucessos / n_peso
+ep_phat  <- sqrt(phat * (1 - phat) / n_peso)
+ic_prop  <- phat + c(-1, 1) * qnorm(0.975) * ep_phat
+
+cat("Tabela da variável criada:\n"); print(table(d1$PESO_2500, dnn = "PESO_2500"))
+cat("\nsucessos =", sucessos, "| n =", n_peso, "\n")
+cat("phat =", num(phat, 4), "| erro padrão =", num(ep_phat, 4), "\n")
+cat("IC 95% = [", num(ic_prop[1], 4), ";", num(ic_prop[2], 4), "]\n")
+cat("Requisitos -> n*phat =", num(n_peso * phat, 1),
+    "| n*(1-phat) =", num(n_peso * (1 - phat), 1), "\n")
+```
+
+Resposta:
+
+(a) A variável indicadora construída é
+$$Y_i = \begin{cases} 1, & \text{se } \text{PESO}_i \geq 2.500\text{ g (sucesso)}, \\ 0, & \text{se } \text{PESO}_i < 2.500\text{ g (fracasso)}. \end{cases}$$
+Na amostra de 200 recém-nascidos foram observados 186 sucessos (peso $\geq$ 2.500 g) e 14 fracassos (baixo peso, peso $<$ 2.500 g).
+
+(b) A estimativa pontual da proporção é
+$$\hat{p} = \frac{186}{200} = 0{,}93.$$
+O intervalo de confiança de 95\% (aproximação normal de Wald) é
+$$\hat{p} \pm z_{0{,}975}\sqrt{\frac{\hat{p}(1-\hat{p})}{n}}
+\quad\Longrightarrow\quad
+0{,}93 \pm 1{,}96 \times 0{,}01804
+\quad\Longrightarrow\quad
+IC_{95\%} = [0{,}8946;\ 0{,}9654].$$
+
+\textbf{Verificação dos requisitos:} (i) os dados provêm de uma amostra aleatória simples, o que assegura a independência das observações; (ii) o número esperado de sucessos e de fracassos é suficientemente grande para que a distribuição amostral de $\hat{p}$ seja aproximadamente normal — tem-se $n\hat{p} = 186$ e $n(1-\hat{p}) = 14$, ambos maiores ou iguais a 10; (iii) a amostra ($n = 200$) corresponde a menos de 10\% da população ($\approx$ 2,39 milhões de nascidos vivos), condição que também garante a independência. Os requisitos estão satisfeitos.
+
+\vspace{0.2cm}
+
+(c) Formulação do teste:
+$$H_0: p = 0{,}90 \qquad \text{versus} \qquad H_1: p \neq 0{,}90, \qquad \alpha = 0{,}05.$$
+
+```{r q5c}
+# Estatística z para uma proporção
+z_prop    <- (phat - 0.90) / sqrt(0.90 * 0.10 / n_peso)
+p_valor_z <- 2 * pnorm(-abs(z_prop))
+cat("z =", num(z_prop, 4), "| p-valor =", num(p_valor_z, 4), "| z^2 =", num(z_prop^2, 4), "\n\n")
+
+teste_prop <- prop.test(x = sucessos, n = n_peso, p = 0.90, correct = FALSE)
+cat("X2 =", num(as.numeric(teste_prop$statistic), 4),
+    "| gl =", as.numeric(teste_prop$parameter),
+    "| p-valor =", num(teste_prop$p.value, 4), "\n")
+cat("Valor critico: +/-", num(qnorm(0.975), 4), "\n")
+```
+
+Resposta: \textbf{Sim}, não há evidência para negar a afirmação de que a proporção de recém-nascidos com peso maior ou igual a 2.500 g é de 90\%.
+Justificativa: a estatística de teste é
+$$z = \frac{\hat{p} - p_0}{\sqrt{\dfrac{p_0(1-p_0)}{n}}} = \frac{0{,}93 - 0{,}90}{\sqrt{\dfrac{0{,}90 \times 0{,}10}{200}}} \approx 1{,}414,$$
+com p-valor $\approx 0{,}1573$. Como o p-valor é maior que $\alpha = 0{,}05$ (e a estatística $z$, em módulo, é inferior ao valor crítico 1,96), \textbf{não se rejeita} $H_0$. Em outras palavras, a diferença entre a proporção observada (93\%) e a hipotética (90\%) é pequena o suficiente para ser atribuída à variabilidade amostral, portanto a afirmação de que a proporção é de 90\% não pode ser descartada. Observe que o intervalo de confiança de 95\% para $p$ obtido em (b), $[0{,}8946;\ 0{,}9654]$, contém o valor 0,90, o que é consistente com a conclusão do teste.
+
+Os requisitos para o teste de hipóteses de uma proporção são os mesmos verificados em (b): amostra aleatória simples, independência das observações e, sob $H_0$, $n p_0 = 200 \times 0{,}90 = 180 \geq 10$ e $n(1 - p_0) = 200 \times 0{,}10 = 20 \geq 10$, o que garante a normalidade da distribuição amostral de $\hat{p}$.
+
+(d) 
+
+```{r q5d}
+peso_pop   <- d2$PESO
+n_pop_peso <- sum(!is.na(peso_pop))
+prop_pop   <- mean(peso_pop >= 2500, na.rm = TRUE)
+cobre_prop <- prop_pop >= ic_prop[1] && prop_pop <= ic_prop[2]
+
+cat("N populacional válido      :", n_pop_peso, "\n")
+cat("Proporcao populacional (p) :", num(prop_pop, 4), "\n")
+cat("Estimativa amostral (phat) :", num(phat, 4), "\n")
+cat("Erro amostral (phat - p)   :", num(phat - prop_pop, 4), "\n")
+cat("IC 95% amostral            : [", num(ic_prop[1], 4), ";", num(ic_prop[2], 4), "]\n")
+cat("O parâmetro pertence ao IC?", ifelse(cobre_prop, "SIM", "NÃO"), "\n")
+cat("Proporção de baixo peso (< 2500 g) na população:", num(1 - prop_pop, 4), "\n")
+```
+
+Resposta: Na base completa (2.389.104 nascidos vivos com informação de peso), a verdadeira proporção de recém-nascidos com peso maior ou igual a 2.500 g é
+$$p = 0{,}9052 \approx 90{,}52\%.$$
+A comparação com os resultados amostrais está resumida a seguir.
+
+\begin{center}
+\begin{tabular}{l|c}
+\hline
+\textbf{Quantidade} & \textbf{Valor} \\
+\hline
+Estimativa pontual ($\hat{p}$) & 0,9300 \\
+Proporção populacional ($p$)   & 0,9052 \\
+Erro amostral ($\hat{p} - p$)  & $0{,}0248$ \\
+IC 95\%                        & $[0{,}8946;\ 0{,}9654]$ \\
+\hline
+\end{tabular}
+\end{center}
+
+A estimativa pontual (0,93) ficou próxima do verdadeiro parâmetro populacional (0,9052), com erro amostral de 0,0248 (cerca de 2,5 pontos percentuais), e o valor de $p$ \textbf{pertence} ao intervalo de confiança de 95\% construído a partir da amostra. Novamente, isso confirma a interpretação correta do intervalo de confiança: o intervalo obtido cobriu o parâmetro populacional. Observe ainda que, na população, cerca de 9,48\% dos recém-nascidos apresentam baixo peso ($<$ 2.500 g), valor coerente com o que se conhece sobre a prevalência de baixo peso ao nascer no Brasil.
