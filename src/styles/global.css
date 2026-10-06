@@ -1,6 +1,6 @@
 /* ============================================================
-   Probabilidade & Inferência Estatística — tema "caderno científico"
-   Claro por padrão, escuro opcional (classe .dark no <html>).
+   Probabilidade & InferÃªncia EstatÃ­stica â€” tema "caderno cientÃ­fico"
+   Claro por padrÃ£o, escuro opcional (classe .dark no <html>).
    ============================================================ */
 
 :root {
@@ -29,7 +29,9 @@
   --radius-lg: 18px;
   --radius-pill: 999px;
 
-  --font-display: 'Fraunces', Georgia, serif;
+  /* Letras estilo giz (mesma fonte das fÃ³rmulas do quadro de fundo). */
+  --font-chalk: 'Patrick Hand', 'Segoe Print', 'Comic Sans MS', cursive;
+  --font-display: var(--font-chalk);
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
 
@@ -458,7 +460,7 @@ html.dark .btn--primary {
 }
 
 .card li::before {
-  content: '▸';
+  content: 'â–¸';
   position: absolute;
   left: 0;
   color: var(--accent);
@@ -489,7 +491,7 @@ html.dark .btn--primary {
   font-family: var(--font-mono);
 }
 
-/* ---------- lab (trilha + questões) ---------- */
+/* ---------- lab (trilha + questÃµes) ---------- */
 .lab__layout {
   display: grid;
   grid-template-columns: 250px minmax(0, 1fr);
@@ -750,7 +752,7 @@ input[type='range']::-moz-range-thumb {
   margin-top: 0.15rem;
 }
 
-/* ---------- reveal (ver resolução) ---------- */
+/* ---------- reveal (ver resoluÃ§Ã£o) ---------- */
 .reveal__toggle {
   display: inline-flex;
   align-items: center;
@@ -803,7 +805,7 @@ input[type='range']::-moz-range-thumb {
   white-space: nowrap;
 }
 
-/* ---------- mini chart (distribuição) ---------- */
+/* ---------- mini chart (distribuiÃ§Ã£o) ---------- */
 .mini-chart {
   display: flex;
   align-items: flex-end;
@@ -1073,7 +1075,7 @@ input[type='range']::-moz-range-thumb {
 }
 
 /* ============================================================
-   Polimento visual — inspirado no tema "cyber" de r-introduction
+   Polimento visual â€” inspirado no tema "cyber" de r-introduction
    ============================================================ */
 
 /* 1. Fundo com os gradientes do tema (grade removida a pedido) */
@@ -1179,11 +1181,11 @@ html.dark body {
   box-shadow: var(--shadow-lift);
 }
 
-/* 5. Botões com microinteração de press */
+/* 5. BotÃµes com microinteraÃ§Ã£o de press */
 .btn:hover {
    transform: translate(-2px, -2px) scale(1.02);
  }
-/* 6. Destaque do hero em gradiente accent → gold */
+/* 6. Destaque do hero em gradiente accent â†’ gold */
 .hero__title em {
   background: linear-gradient(115deg, var(--accent), var(--gold));
   -webkit-background-clip: text;
@@ -1192,84 +1194,1011 @@ html.dark body {
 }
 
 /* ============================================================
-   Fundo — aurora + doodles de giz + grão (3 camadas)
+   Fundo â€” quadro animado de CiÃªncia de Dados (SVG)
+   Substitui o antigo fundo de doodles (aurora + giz + grÃ£o).
    ============================================================ */
-.chalk-bg {
+:root {
+  --board-opacity: 0.4;
+}
+
+html.dark {
+  --board-opacity: 0.7;
+}
+
+.board-bg {
   position: fixed;
   inset: 0;
-  z-index: 0;
+  z-index: -1;
   pointer-events: none;
   overflow: hidden;
 }
 
-/* 1 — aurora: manchas difusas nas cores do tema */
-.chalk-bg__aurora {
-  position: absolute;
-  inset: -20%;
-  background:
-    radial-gradient(38% 45% at 18% 22%, var(--accent-soft), transparent 70%),
-    radial-gradient(34% 40% at 82% 18%, var(--gold-soft), transparent 70%),
-    radial-gradient(42% 48% at 70% 85%, color-mix(in srgb, var(--teal) 14%, transparent), transparent 72%),
-    radial-gradient(30% 36% at 25% 78%, var(--accent-soft), transparent 70%);
-  animation: aurora-breathe 36s ease-in-out infinite alternate;
-  will-change: transform;
+.board-bg__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: var(--board-opacity);
+  /* Clareia o centro (onde vive o conteÃºdo) e mantÃ©m o quadro denso nas bordas. */
+  -webkit-mask-image: radial-gradient(ellipse 72% 66% at 50% 44%, rgba(0, 0, 0, 0.28), #000 84%);
+  mask-image: radial-gradient(ellipse 72% 66% at 50% 44%, rgba(0, 0, 0, 0.28), #000 84%);
 }
 
-@keyframes aurora-breathe {
-  from {
-    transform: translate3d(-1.5%, -1%, 0) scale(1);
-  }
-  to {
-    transform: translate3d(1.5%, 1.5%, 0) scale(1.06);
-  }
+.board-bg__svg text {
+  font-family: var(--font-chalk);
+  user-select: none;
 }
 
- /* 2 — doodles: densos de borda a borda (como a referência) */
- .chalk-bg__doodles {   position: absolute;
-   inset: 0;
- }
-.chalk-bg__defs {
-  position: absolute;
-  width: 0;
-  height: 0;
-}
-
-.chalk-doodle {
-  position: absolute;
-  overflow: visible;
-  color: var(--ink-faint);
-  opacity: 0.34;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.chalk-doodle circle {
-  fill: currentColor;
-  stroke: none;
-}
-
-.chalk-doodle__text {
-  fill: currentColor;
-  stroke: none;
-  font-family: var(--font-mono);
-  font-size: 17px;
-  letter-spacing: 0.02em;
-}
-
-/* 3 — grão estático (ruído SVG em data-URI) */
-.chalk-bg__grain {
+/* GrÃ£o estÃ¡tico (ruÃ­do SVG em data-URI) para textura de ardÃ³sia. */
+.board-bg__grain {
   position: absolute;
   inset: 0;
   opacity: 0.5;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.055'/%3E%3C/svg%3E");
 }
 
-@media (max-width: 720px) {
-  /* doodles saem do caminho do texto em telas pequenas */
-  .chalk-bg__doodles {
-    opacity: 0.55;
+/* ============================================================
+   Letras estilo giz colorido â€” brilho colorido que atravessa
+   (mesmo clima e ritmo do quadro animado de fundo)
+   ============================================================ */
+.hero__title,
+.section-head h2 {
+  position: relative;
+  background-repeat: repeat, no-repeat;
+  animation: chalk-pass 7s linear infinite;
+}
+
+/* SÃ³ aplica tinta com textura se o navegador souber recortar o fundo pelo texto
+   (evita texto invisÃ­vel / barra colorida em navegadores antigos). */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .hero__title,
+  .section-head h2 {
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23c)' opacity='0.38'/%3E%3C/svg%3E"),
+      linear-gradient(
+        105deg,
+        var(--accent) 0%,
+        var(--teal) 20%,
+        var(--gold) 40%,
+        var(--rose) 58%,
+        var(--accent) 78%,
+        var(--teal) 100%
+      );
+    background-size: 160px 160px, 300% 100%;
+    background-position: 0 0, 0% 0;
+    background-blend-mode: soft-light, normal;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
   }
+}
+
+@keyframes chalk-pass {
+  from {
+    background-position: 0 0, 0% 0;
+  }
+  to {
+    background-position: 0 0, 100% 0;
+  }
+}
+
+/* ============================================================
+   LaboratÃ³rio 3D â€” o quadro de giz portado para Three.js.
+   A cena Ã© o conteÃºdo: o canvas ocupa a Ã¡rea grande e os
+   controles ficam ao lado (desktop) ou na barra de baixo (mobile).
+   ============================================================ */
+.ds3d {
+  --ds3d-live: var(--accent);
+  --ds3d-panel: color-mix(in srgb, var(--paper-raised) 84%, transparent);
+  --ds3d-cyan: #27c4e0;
+  --ds3d-yellow: #f7c531;
+  --ds3d-pink: #ee3f7a;
+}
+
+html.dark .ds3d {
+  --ds3d-live: var(--ds3d-cyan);
+  --ds3d-panel: color-mix(in srgb, #0b1120 78%, transparent);
+}
+
+.ds3d__stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 19rem;
+  gap: 1.1rem;
+  align-items: stretch;
+}
+
+.ds3d__viewport {
+  position: relative;
+  height: min(68vh, 640px);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--rule-strong);
+  box-shadow: var(--shadow-card);
+  /* mesma famÃ­lia de fundo da cena (preto â†’ azul-marinho / papel) */
+  background: radial-gradient(125% 100% at 50% 0%, #121b30, #05070d);
+}
+
+html:not(.dark) .ds3d__viewport {
+  background: radial-gradient(125% 100% at 50% 0%, #fdfbf6, #e5ddca);
+}
+
+.ds3d__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* no celular o arrasto vertical continua rolando a pÃ¡gina */
+  touch-action: pan-y;
+  cursor: grab;
+}
+
+.ds3d__canvas:active {
+  cursor: grabbing;
+}
+
+.ds3d__canvas:focus-visible {
+  outline: 3px solid var(--ds3d-live);
+  outline-offset: -3px;
+}
+
+/* ---------- leituras ao vivo (nÃ£o capturam o ponteiro) ---------- */
+.ds3d__hud {
+  position: absolute;
+  top: 0.9rem;
+  left: 0.9rem;
+  max-width: min(22rem, 62%);
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--rule);
+  background: var(--ds3d-panel);
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.ds3d__hud-tag {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ds3d-live);
+}
+
+.ds3d__hud-hint {
+  color: var(--ink-soft);
+  line-height: 1.35;
+}
+
+.ds3d__readout {
+  margin: 0.15rem 0 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.15rem 0.75rem;
+  align-items: baseline;
+}
+
+.ds3d__readout-item {
+  display: contents;
+}
+
+.ds3d__readout dt {
+  color: var(--ink-faint);
+  font-size: 0.76rem;
+}
+
+.ds3d__readout dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* ---------- painel Explicar ---------- */
+.ds3d__explain {
+  position: absolute;
+  left: 0.9rem;
+  right: 0.9rem;
+  bottom: 0.9rem;
+  max-height: 52%;
+  overflow: auto;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--rule-strong);
+  background: color-mix(in srgb, var(--paper-raised) 94%, transparent);
+  box-shadow: var(--shadow-card);
+}
+
+html.dark .ds3d__explain {
+  background: color-mix(in srgb, #0d1424 92%, transparent);
+}
+
+.ds3d__explain h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.6rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--ds3d-live);
+}
+
+.ds3d__formula {
+  margin: 0 0 0.7rem;
+  font-family: var(--font-chalk);
+  font-size: clamp(1.35rem, 3vw, 2rem);
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.ds3d__formula sub,
+.ds3d__formula sup {
+  font-size: 0.6em;
+}
+
+.chalk-bar {
+  position: relative;
+  display: inline-block;
+}
+
+.chalk-bar::after {
+  content: '';
+  position: absolute;
+  left: 0.06em;
+  right: 0.06em;
+  top: -0.04em;
+  border-top: 0.07em solid currentColor;
+}
+
+.ds3d__explain-text {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.94rem;
+  line-height: 1.5;
+}
+
+.ds3d__detail {
+  margin: 0.7rem 0 0;
+  padding-top: 0.6rem;
+  border-top: 1px dashed var(--rule-strong);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--ds3d-live);
+}
+
+.ds3d__fallback {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(32rem, 84%);
+  margin: 0;
+  padding: 1rem 1.2rem;
+  text-align: center;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--rule-strong);
+  background: var(--ds3d-panel);
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+}
+
+/* ---------- controles ao lado ---------- */
+.ds3d__controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--rule-strong);
+  background: var(--paper-raised);
+  box-shadow: var(--shadow-card);
+}
+
+.ds3d__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.ds3d__nav button {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.6rem;
+  text-align: left;
+  font-size: 0.9rem;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.ds3d__nav button span {
+  flex: none;
+  width: 1.45rem;
+  height: 1.45rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  opacity: 0.75;
+}
+
+.ds3d__nav button:hover {
+  background: var(--accent-soft);
+}
+
+.ds3d__nav button.is-active {
+  color: var(--ds3d-live);
+  font-weight: 600;
+  border-color: var(--ds3d-live);
+  background: color-mix(in srgb, var(--ds3d-live) 14%, transparent);
+}
+
+.ds3d__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.ds3d__buttons .btn {
+  padding: 0.5rem 0.8rem;
+  font-size: 0.82rem;
+}
+
+.ds3d__step {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: auto;
+}
+
+.ds3d__help {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 960px) {
+  .ds3d__stage {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* cena quase fullscreen, com a barra de controles colada embaixo */
+  .ds3d__viewport {
+    height: min(72vh, 560px);
+  }
+
+  .ds3d__controls {
+    position: sticky;
+    bottom: 0.5rem;
+    z-index: 2;
+    gap: 0.6rem;
+    padding: 0.7rem;
+    background: color-mix(in srgb, var(--paper-raised) 94%, transparent);
+    backdrop-filter: blur(10px);
+  }
+
+  .ds3d__nav {
+    flex-direction: row;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .ds3d__nav button {
+    white-space: nowrap;
+    padding: 0.4rem 0.55rem;
+    font-size: 0.82rem;
+  }
+
+  .ds3d__hud {
+    max-width: calc(100% - 1.4rem);
+  }
+
+  .ds3d__help {
+    display: none;
+  }
+}
+
+/* ============================================================
+   SISTEMA 3D — Toda a página é interativa e tridimensional
+   ============================================================ */
+
+/* --- Perspectiva base da cena --- */
+html {
+  perspective: 1400px;
+}
+
+/* ============================================================
+   HERO 3D
+   ============================================================ */
+.hero--3d {
+  position: relative;
+  overflow: hidden;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  padding: calc(var(--nav-h) + 3.5rem) 0 4.5rem;
+}
+
+/* Canvas de partículas ocupa o hero inteiro */
+.hero__particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Garante que o conteúdo fica acima das partículas */
+.hero--3d .container {
+  position: relative;
+  z-index: 1;
+}
+
+.hero__text-wrap {
+  position: relative;
+}
+
+/* Gradiente de vidro por baixo do texto para legibilidade */
+.hero__text-wrap::before {
+  content: '';
+  position: absolute;
+  inset: -2rem -1.5rem;
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--paper) 60%, transparent) 0%, transparent 70%);
+  border-radius: var(--radius-lg);
+  pointer-events: none;
+  z-index: -1;
+}
+
+html.dark .hero__text-wrap::before {
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--paper) 55%, transparent) 0%, transparent 70%);
+}
+
+/* ---- Stats card com efeito de profundidade ---- */
+.stat--3d {
+  position: relative;
+  overflow: hidden;
+  /* Fundo com glassmorphism */
+  background: color-mix(in srgb, var(--paper-raised) 88%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in srgb, var(--rule-strong) 80%, var(--accent) 20%);
+  box-shadow:
+    0 4px 24px color-mix(in srgb, var(--accent) 8%, transparent),
+    inset 0 1px 0 rgba(255,255,255,0.15);
+}
+
+/* Brilho lateral do stat card */
+.stat__shine {
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+  transform: skewX(-20deg);
+  pointer-events: none;
+  transition: left 0.5s var(--ease);
+}
+
+.stat--3d:hover .stat__shine {
+  left: 120%;
+  transition: left 0.55s var(--ease);
+}
+
+/* ============================================================
+   OVERVIEW — CARDS FLIP 3D
+   ============================================================ */
+.overview__grid--flip {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+/* Container do flip */
+.flip-card {
+  height: 240px;
+  cursor: pointer;
+  /* Sem overflow aqui para preservar o 3D */
+}
+
+@media (max-width: 640px) {
+  .flip-card {
+    height: 220px;
+  }
+}
+
+.flip-card__inner {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.flip-card {
+  position: relative;
+}
+
+/* Faces do flip */
+.flip-card__face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: var(--radius-md);
+  padding: 1.4rem 1.5rem;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule-strong);
+  border-left-width: 4px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow: hidden;
+}
+
+.flip-card__face h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.15rem;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.flip-card__face--back {
+  transform: rotateY(180deg);
+  background: linear-gradient(135deg, var(--paper-raised), color-mix(in srgb, var(--accent-soft) 40%, var(--paper-raised)));
+}
+
+.flip-card__icon {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.flip-card__hint {
+  margin-top: auto;
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+/* Listas dentro dos flip cards */
+.ov-card__list {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+}
+
+.ov-card__list li {
+  padding-left: 1rem;
+  position: relative;
+}
+
+.ov-card__list li::before {
+  content: '?';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+}
+
+.ov-card__list .mono {
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  background: var(--accent-soft);
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+}
+
+/* Conteúdo do verso */
+.ov-card__back-label {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0;
+}
+
+.ov-card__back-stats,
+.ov-card__back-params {
+  display: flex;
+  gap: 1.5rem;
+  margin: 0.4rem 0;
+}
+
+.ov-card__back-stats div,
+.ov-card__back-params div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.ov-card__big {
+  font-family: var(--font-mono);
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.ov-card__back-stats small,
+.ov-card__back-params small {
+  font-size: 0.68rem;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.ov-card__back-dists {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.4rem 0;
+}
+
+.ov-card__dist-pill {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-radius: var(--radius-pill);
+  padding: 0.22rem 0.65rem;
+}
+
+/* ============================================================
+   PANELS 3D (Results)
+   ============================================================ */
+.panel--3d {
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.3s var(--ease);
+  will-change: transform;
+}
+
+.panel--3d:hover {
+  box-shadow:
+    var(--shadow-lift),
+    0 0 40px color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+/* ============================================================
+   FORMULA CARDS 3D
+   ============================================================ */
+.formula--3d {
+  position: relative;
+  overflow: hidden;
+  will-change: transform;
+}
+
+.formula__shine {
+  position: absolute;
+  top: 0;
+  left: -70%;
+  width: 35%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transform: skewX(-20deg);
+  pointer-events: none;
+  transition: left 0.5s var(--ease);
+}
+
+.formula--3d:hover .formula__shine {
+  left: 130%;
+  transition: left 0.6s var(--ease);
+}
+
+/* ============================================================
+   FOOTER COM CUBO 3D
+   ============================================================ */
+.footer--3d {
+  position: relative;
+  overflow: hidden;
+}
+
+.footer__grid--3d {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 2rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.footer__cube-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
+
+/* ---- Cubo CSS 3D ---- */
+.cube3d {
+  width: 64px;
+  height: 64px;
+  perspective: 300px;
+}
+
+.cube3d__inner {
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+
+.cube3d__face {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--paper-raised) 85%, transparent);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--rule-strong);
+  backface-visibility: visible;
+}
+
+/* Posição de cada face */
+.cube3d__face--1 { transform: rotateY(  0deg) translateZ(32px); background: color-mix(in srgb, var(--accent) 18%, var(--paper-raised)); }
+.cube3d__face--2 { transform: rotateY( 90deg) translateZ(32px); background: color-mix(in srgb, var(--gold)   18%, var(--paper-raised)); }
+.cube3d__face--3 { transform: rotateY(180deg) translateZ(32px); background: color-mix(in srgb, var(--teal)   18%, var(--paper-raised)); }
+.cube3d__face--4 { transform: rotateY(270deg) translateZ(32px); background: color-mix(in srgb, var(--rose)   18%, var(--paper-raised)); }
+.cube3d__face--5 { transform: rotateX( 90deg) translateZ(32px); background: color-mix(in srgb, var(--accent) 12%, var(--paper-raised)); }
+.cube3d__face--6 { transform: rotateX(270deg) translateZ(32px); background: color-mix(in srgb, var(--gold)   12%, var(--paper-raised)); }
+
+/* ---- Ajuste do footer grid para mobile ---- */
+@media (max-width: 840px) {
+  .footer__grid--3d {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  .footer__cube-wrap {
+    justify-self: center;
+    padding: 0.5rem;
+  }
+
+  .footer .footer__meta {
+    text-align: left;
+  }
+}
+
+/* ============================================================
+   SEÇÕES — entradas perspectiva (section-head)
+   ============================================================ */
+.section-head {
+  transform-style: preserve-3d;
+}
+
+/* ============================================================
+   OVERVIEW RESPONSIVE
+   ============================================================ */
+@media (max-width: 640px) {
+  .overview__grid--flip {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
+   NAVBAR — micro-interações 3D
+   ============================================================ */
+.navbar {
+  transform-style: preserve-3d;
+  perspective: 800px;
+}
+
+.brand {
+  display: inline-flex;
+  transform-style: preserve-3d;
+}
+
+.navbar__links {
+  transform-style: preserve-3d;
+}
+
+/* ============================================================
+   RESULTADOS — painel 3D
+   ============================================================ */
+.results--3d .compare {
+  transform-style: preserve-3d;
+}
+
+/* ============================================================
+   FÓRMULAS — grid 3D
+   ============================================================ */
+.formulas--3d .formulas {
+  transform-style: preserve-3d;
+}
+
+/* ============================================================
+   ANIMAÇÕES GLOBAIS DE ENTRADA 3D
+   ============================================================ */
+
+/* Entrada de seções: scroll revela com perspectiva de livro */
+@keyframes section-rise-3d {
+  from {
+    opacity: 0;
+    transform: rotateX(-15deg) translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: rotateX(0deg) translateY(0);
+  }
+}
+
+/* Flutuação suave para elementos 3D estáticos */
+@keyframes float-3d {
+  0%, 100% { transform: translateY(0) rotateX(0deg); }
+  33%       { transform: translateY(-6px) rotateX(2deg); }
+  66%       { transform: translateY(-3px) rotateX(-1deg); }
+}
+
+/* Giro suave do cubo de fundo */
+@keyframes cube-spin {
+  from { transform: rotateY(0deg) rotateX(15deg); }
+  to   { transform: rotateY(360deg) rotateX(15deg); }
+}
+
+/* Pulsação de brilho 3D */
+@keyframes glow-pulse-3d {
+  0%, 100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 0%, transparent);
+  }
+}
+
+/* Ondulação de brilho lateral */
+@keyframes shine-sweep {
+  from { left: -70%; }
+  to   { left: 130%; }
+}
+
+/* ============================================================
+   EFEITO DE PROFUNDIDADE — sombras 3D nos cards hover
+   ============================================================ */
+.card {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.card:hover {
+  transform: translateY(-3px) rotateX(-2deg) rotateY(1deg);
+  box-shadow:
+    var(--shadow-lift),
+    0 8px 30px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+/* ============================================================
+   PREFERS-REDUCED-MOTION — respeito total
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .hero__particles { display: none; }
+
+  .flip-card__inner,
+  .cube3d__inner {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .stat--3d,
+  .formula--3d,
+  .panel--3d,
+  .flip-card {
+    transform: none !important;
+    transition: opacity 0.2s !important;
+  }
+
+  .stat__shine,
+  .formula__shine {
+    display: none;
+  }
+}
+
+/* ============================================================
+   MOBILE — Toque e orientação
+   ============================================================ */
+
+/* No mobile, aumenta a área de toque dos cards */
+@media (hover: none) and (pointer: coarse) {
+  .flip-card {
+    /* Indica que é tocável */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .flip-card__hint {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .flip-card__hint::before {
+    content: '??';
+    font-size: 0.9em;
+  }
+
+  /* Stats cards no mobile têm toque mais responsivo */
+  .stat--3d:active {
+    transform: scale(0.97) rotateX(4deg) !important;
+    transition: transform 0.1s !important;
+  }
+}
+
+/* ============================================================
+   GLASSMORPHISM ESCURO — melhorar contraste dos cards 3D no dark mode
+   ============================================================ */
+html.dark .stat--3d {
+  background: color-mix(in srgb, var(--paper-raised) 82%, transparent);
+  border-color: color-mix(in srgb, var(--rule-strong) 70%, var(--accent) 30%);
+  box-shadow:
+    0 4px 24px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.07);
+}
+
+html.dark .flip-card__face {
+  background: color-mix(in srgb, var(--paper-raised) 90%, transparent);
+}
+
+html.dark .flip-card__face--back {
+  background: linear-gradient(135deg,
+    var(--paper-raised),
+    color-mix(in srgb, var(--accent-soft) 60%, var(--paper-raised))
+  );
+}
+
+html.dark .cube3d__face {
+  border-color: color-mix(in srgb, var(--rule-strong) 60%, var(--accent) 40%);
+}
+
+html.dark .panel--3d:hover {
+  box-shadow:
+    var(--shadow-lift),
+    0 0 50px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+html.dark .formula--3d {
+  box-shadow:
+    var(--shadow-card),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+html.dark .formula--3d:hover {
+  box-shadow:
+    var(--shadow-lift),
+    0 0 30px color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+/* ============================================================
+   APP ROOT
+   ============================================================ */
+/* De propósito **sem** `perspective` na raiz: um ancestral com perspectiva
+   vira o "containing block" dos filhos `position: fixed` — o navbar e a barra
+   de progresso deixariam de ficar presos à tela (rolariam junto com a
+   página). Cada efeito 3D abre a própria perspectiva no elemento que a usa. */
+.app--3d {
+  position: relative;
+}
+
+/* Esconde o backdrop removido (caso algum CSS ainda referencie) */
+.board-bg {
+  display: none !important;
 }

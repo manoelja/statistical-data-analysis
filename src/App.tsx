@@ -1,15 +1,14 @@
 import { useEffect } from "react";
 import { Navbar } from "./components/site/Navbar";
-import { ChalkDoodles } from "./components/site/ClalkDoodles";
-import { Hero } from "./components/site/Hero";
-import { Overview } from "./components/site/Overview";
-import { ProbabilityLab } from "./components/labs/ProbabilityLab";
-import { InferenceLab } from "./components/labs/InferenceLab";
-import { Results } from "./components/site/Results";
-import { FormulaSheet } from "./components/site/FormulaSheet";
-import { Footer } from "./components/site/Footer";
+import { Journey3D } from "./components/site/Journey3D";
 import "./styles/global.css";
+import "./styles/journey.css";
 
+/**
+ * A página **é** a jornada: o canvas 3D fica fixo como fundo e as seis etapas
+ * de conteúdo (visão geral, parte 1, parte 2, resultados, formulário e contato)
+ * rolam por cima dele, cada uma com o seu elemento 3D ao lado.
+ */
 function App() {
   useEffect(() => {
     if ("scrollRestoration" in history) history.scrollRestoration = "manual";
@@ -17,18 +16,11 @@ function App() {
   }, []);
 
   return (
-    <div className="App">
-      <ChalkDoodles />
+    <div className="App app--3d">
       <Navbar />
       <main>
-        <Hero />
-        <Overview />
-        <ProbabilityLab />
-        <InferenceLab />
-        <Results />
-        <FormulaSheet />
+        <Journey3D />
       </main>
-      <Footer />
     </div>
   );
 }

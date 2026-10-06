@@ -1,3 +1,10 @@
+/**
+ * Results — seção de resultados com animações 3D:
+ * - Entrada dos painéis com rotateX (efeito de livro se abrindo)
+ * - Cards numéricos com depth e hover 3D
+ * - Barra de intervalo com animação de preenchimento
+ */
+
 import { motion } from 'framer-motion';
 import { apgar, dataset, peso } from '../../data/results';
 import { fmt } from '../../lib/stats';
@@ -12,15 +19,29 @@ interface IntervalVizProps {
 function IntervalViz({ domain, range, param, digits }: IntervalVizProps) {
   const [lo, hi] = domain;
   const toPct = (v: number) => ((v - lo) / (hi - lo)) * 100;
+  const leftPct  = toPct(range[0]);
+  const widthPct = toPct(range[1]) - leftPct;
+  const paramPct = toPct(param);
 
   return (
     <div className="interval-viz">
       <div className="interval-viz__track">
-        <div
+        <motion.div
           className="interval-viz__range"
-          style={{ left: `${toPct(range[0])}%`, width: `${toPct(range[1]) - toPct(range[0])}%` }}
+          initial={{ left: `${paramPct}%`, width: '0%' }}
+          whileInView={{ left: `${leftPct}%`, width: `${widthPct}%` }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.9, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
         />
-        <div className="interval-viz__param" style={{ left: `${toPct(param)}%` }} title={`μ/p = ${fmt(param, digits)}`} />
+        <motion.div
+          className="interval-viz__param"
+          style={{ left: `${paramPct}%` }}
+          initial={{ scaleY: 0 }}
+          whileInView={{ scaleY: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4, delay: 0.8 }}
+          title={`μ/p = ${fmt(param, digits)}`}
+        />
       </div>
       <div className="interval-viz__labels">
         <span>{fmt(lo, digits)}</span>
@@ -31,21 +52,45 @@ function IntervalViz({ domain, range, param, digits }: IntervalVizProps) {
   );
 }
 
+const panelVariants = {
+  hidden: { opacity: 0, rotateX: -16, y: 28 },
+  visible: { opacity: 1, rotateX: 0, y: 0 },
+};
+
 export function Results() {
   return (
-    <section className="section" id="resultados">
+    <section className="section results--3d">
       <div className="container">
-        <div className="section-head">
+        {/* Cabeçalho com entrada perspectiva */}
+        <motion.div
+          className="section-head"
+          initial={{ opacity: 0, rotateX: -14, y: 20 }}
+          whileInView={{ opacity: 1, rotateX: 0, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+          style={{ perspective: '600px' }}
+        >
           <span className="eyebrow">Resultados</span>
           <h2>O intervalo cobriu o parâmetro?</h2>
           <p>
-            A pergunta (d) de cada questão compara a estimativa amostral com o verdadeiro valor da
-            população. É o teste prático do significado de “95% de confiança”.
+            A pergunta (d) de cada questão compara a estimativa amostral com o
+            verdadeiro valor da população. É o teste prático do significado de
+            "95% de confiança".
           </p>
-        </div>
+        </motion.div>
 
-        <div className="compare">
-          <motion.div className="panel" style={{ padding: '1.5rem' }} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}>
+        <div className="compare" style={{ perspective: '800px' }}>
+          {/* Painel APGAR */}
+          <motion.div
+            className="panel panel--3d"
+            style={{ padding: '1.5rem', transformStyle: 'preserve-3d' }}
+            variants={panelVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-40px' }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            whileHover={{ rotateY: 3, rotateX: -2, translateZ: 10, transition: { duration: 0.3 } }}
+          >
             <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', marginBottom: '0.3rem' }}>
               Média do APGAR1
             </h3>
@@ -56,62 +101,72 @@ export function Results() {
 
             <table className="data-table" style={{ marginTop: '1rem' }}>
               <tbody>
-                <tr>
-                  <td>Estimativa pontual (x̄)</td>
-                  <td className="mono">{fmt(apgar.xbar)}</td>
-                </tr>
-                <tr>
-                  <td>Média populacional (μ)</td>
-                  <td className="mono">{fmt(apgar.muPopulacao)}</td>
-                </tr>
-                <tr>
-                  <td>Erro amostral</td>
-                  <td className="mono">{fmt(apgar.erroAmostral)}</td>
-                </tr>
-                <tr>
-                  <td>IC 95%</td>
-                  <td className="mono">[{fmt(apgar.icLower)}; {fmt(apgar.icUpper)}]</td>
-                </tr>
+                {[
+                  ['Estimativa pontual (x̄)', fmt(apgar.xbar)],
+                  ['Média populacional (μ)',  fmt(apgar.muPopulacao)],
+                  ['Erro amostral',           fmt(apgar.erroAmostral)],
+                  ['IC 95%',                  `[${fmt(apgar.icLower)}; ${fmt(apgar.icUpper)}]`],
+                ].map(([label, value]) => (
+                  <tr key={label}>
+                    <td>{label}</td>
+                    <td className="mono">{value}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
 
-            <IntervalViz domain={[8.0, 8.55]} range={[apgar.icLower, apgar.icUpper]} param={apgar.muPopulacao} digits={4} />
+            <IntervalViz
+              domain={[8.0, 8.55]}
+              range={[apgar.icLower, apgar.icUpper]}
+              param={apgar.muPopulacao}
+              digits={4}
+            />
             <p style={{ marginTop: '0.8rem', color: 'var(--ink-soft)', fontSize: '0.9rem' }}>
               μ = 8,3075 <strong>pertence</strong> ao IC — como esperado em 95% das amostras.
             </p>
           </motion.div>
 
-          <motion.div className="panel" style={{ padding: '1.5rem' }} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.06 }}>
+          {/* Painel Proporção */}
+          <motion.div
+            className="panel panel--3d"
+            style={{ padding: '1.5rem', transformStyle: 'preserve-3d' }}
+            variants={panelVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-40px' }}
+            transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            whileHover={{ rotateY: -3, rotateX: -2, translateZ: 10, transition: { duration: 0.3 } }}
+          >
             <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', marginBottom: '0.3rem' }}>
               Proporção com peso ≥ 2.500 g
             </h3>
             <p style={{ color: 'var(--ink-soft)', fontSize: '0.9rem' }}>
-              Base completa: {dataset.pesoPopulacaoValidos.toLocaleString('pt-BR')} registros com informação
-              de peso. Baixo peso na população: {fmt(peso.baixoPesoPopulacao * 100, 2)}%.
+              Base completa: {dataset.pesoPopulacaoValidos.toLocaleString('pt-BR')} registros com
+              informação de peso. Baixo peso na população: {fmt(peso.baixoPesoPopulacao * 100, 2)}%.
             </p>
 
             <table className="data-table" style={{ marginTop: '1rem' }}>
               <tbody>
-                <tr>
-                  <td>Estimativa pontual (p̂)</td>
-                  <td className="mono">{fmt(peso.phat)}</td>
-                </tr>
-                <tr>
-                  <td>Proporção populacional (p)</td>
-                  <td className="mono">{fmt(peso.populacao)}</td>
-                </tr>
-                <tr>
-                  <td>Erro amostral</td>
-                  <td className="mono">{fmt(peso.erroAmostral)}</td>
-                </tr>
-                <tr>
-                  <td>IC 95%</td>
-                  <td className="mono">[{fmt(peso.icLower)}; {fmt(peso.icUpper)}]</td>
-                </tr>
+                {[
+                  ['Estimativa pontual (p̂)',    fmt(peso.phat)],
+                  ['Proporção populacional (p)', fmt(peso.populacao)],
+                  ['Erro amostral',               fmt(peso.erroAmostral)],
+                  ['IC 95%',                      `[${fmt(peso.icLower)}; ${fmt(peso.icUpper)}]`],
+                ].map(([label, value]) => (
+                  <tr key={label}>
+                    <td>{label}</td>
+                    <td className="mono">{value}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
 
-            <IntervalViz domain={[0.88, 0.98]} range={[peso.icLower, peso.icUpper]} param={peso.populacao} digits={4} />
+            <IntervalViz
+              domain={[0.88, 0.98]}
+              range={[peso.icLower, peso.icUpper]}
+              param={peso.populacao}
+              digits={4}
+            />
             <p style={{ marginTop: '0.8rem', color: 'var(--ink-soft)', fontSize: '0.9rem' }}>
               p = 0,9052 também <strong>pertence</strong> ao IC amostral.
             </p>
