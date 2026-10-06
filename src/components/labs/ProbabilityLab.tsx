@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { LabSection } from '../lab/LabSection';
 import { QuestionCard } from '../lab/QuestionCard';
 import { DistributionBars, Reveal, Slider, Stat } from '../lab/Controls';
 import { dbinom, dpois, fmt, pnorm, sci } from '../../lib/stats';
+import { setSceneParams } from '../../lib/scene/store';
 
 const ITEMS = [
   { id: 'q1', short: 'Binomial' },
@@ -14,6 +15,11 @@ function BinomialLab() {
   const [n, setN] = useState(20);
   const [p, setP] = useState(0.02);
   const [k, setK] = useState(1);
+
+  // Unificação conteúdo ↔ animação: os sliders alimentam o quadro animado.
+  useEffect(() => {
+    setSceneParams({ n, p });
+  }, [n, p]);
 
   const bars = useMemo(() => Array.from({ length: n + 1 }, (_, i) => dbinom(i, n, p)), [n, p]);
   const atK = dbinom(k, n, p);
@@ -68,6 +74,10 @@ function BinomialLab() {
 function PoissonLab() {
   const [lambda, setLambda] = useState(4);
   const [k, setK] = useState(4);
+
+  useEffect(() => {
+    setSceneParams({ lambda });
+  }, [lambda]);
 
   const maxK = Math.max(15, Math.ceil(lambda * 3) + 1);
   const bars = useMemo(() => Array.from({ length: maxK + 1 }, (_, i) => dpois(i, lambda)), [lambda, maxK]);
@@ -125,6 +135,10 @@ function NormalLab() {
   const [x1, setX1] = useState(2500);
   const [x2, setX2] = useState(3000);
   const [x3, setX3] = useState(4000);
+
+  useEffect(() => {
+    setSceneParams({ mu, sigma });
+  }, [mu, sigma]);
 
   const z1 = (x1 - mu) / sigma;
   const pBelow = pnorm(x1, mu, sigma);
