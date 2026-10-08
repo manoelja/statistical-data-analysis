@@ -1,8 +1,14 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import journeyCss from '../../styles/journey.css?raw';
 import '../../styles/journey.css';
 import { Journey3D } from './Journey3D';
-import { JOURNEY_CHAPTERS, JOURNEY_DEPTH, chapterAnchor } from '../../lib/scene/journey';
+import {
+  JOURNEY_CHAPTERS,
+  JOURNEY_DEPTH,
+  JOURNEY_PRESENTED_AT,
+  chapterAnchor,
+} from '../../lib/scene/journey';
 import { resetSceneParams } from '../../lib/scene/store';
 
 /**
@@ -24,6 +30,8 @@ afterEach(() => {
   resetSceneParams();
   vi.restoreAllMocks();
 });
+
+const css = journeyCss;
 
 describe('Journey3D', () => {
   it('monta o canvas e um card por etapa', () => {
@@ -48,9 +56,9 @@ describe('Journey3D', () => {
     expect(container.textContent).toMatch(/parte 2 — inferência/i);
   });
 
-  it('a placa do prólogo fica sobre preto, não sobre o tema', () => {
-    // regressão: a placa usava `--paper`, que no tema escuro é #14131a — o
-    // texto era pintado de preto sobre o preto e o subtítulo sumia
+  it('a placa do prólogo fica sobre preto, não sobre o papel do tema', () => {
+    // regressão: a placa usava `--paper`, que é #14131a — o texto era pintado
+    // de quase-preto sobre o preto do buraco e o subtítulo sumia
     const { container } = render(<Journey3D />);
     const prologue = container.querySelector('.journey__prologue') as HTMLElement;
     expect(prologue).not.toBeNull();
@@ -185,5 +193,37 @@ it('não tem a dica de rolagem sobre o quadro', () => {
       4,
     );
     expect(JOURNEY_DEPTH).toBeGreaterThan(0);
+  });
+
+  it('a rolagem termina onde a página está inteira, e não depois', () => {
+// Regressão: `--journey-height` no CSS e `JOURNEY_PRESENTED_AT` no JS são o
+    // mesmo número escrito em dois lugares, e nada no compilador liga um no
+    // outro. Se alguém mexer na janela do contato e esquecer o CSS, a barra volta
+    // a ter rolagem morta no fim — sem erro, sem aviso, só um trecho de scroll
+    // em que nada acontece.
+    //
+    // São **dois** lugares: o breakpoint mobile reescreve o valor com uma
+    // rolagem 10% mais curta, e foi exatamente esse o que passou quando o
+    // desktop foi corrigido.
+    const declared = [...css.matchAll(/--journey-height:\s*calc\(100vh\s*\+\s*(\d+(?:\.\d+)?)vh\)/g)];
+    expect(declared).toHaveLength(2);
+
+    // o segundo termo de cada um é a trilha, em vh de projeto
+    const tracks = declared.map((match) => Number(match[1]));
+
+    // desktop: a trilha cheia, `JOURNEY_PRESENTED_AT × 500vh` (500vh são as de
+    // projeto: `--journey-track` de uma seção de seis telas)
+    expect(tracks[0]).toBeCloseTo(JOURNEY_PRESENTED_AT * 500, 1);
+
+    // mobile: 10% menos de rolagem, pela mesma razão. A tolerância é de meia unidade
+    // porque a trilha é escrita em vh inteiros — `428 × 0,9` dá 385,2 e o CSS
+    // diz 385. O que conta é o arredondamento, não o resto.
+    expect(tracks[1]).toBeCloseTo(tracks[0] * 0.9, 0);
+
+    // e nenhum dos dois passa do presented: nenhuma sobra depois
+    for (const track of tracks) {
+      expect(track / 500).toBeLessThan(1);
+    }
+    expect(JOURNEY_PRESENTED_AT).toBeLessThan(1);
   });
 });

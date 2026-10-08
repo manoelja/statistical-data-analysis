@@ -8,7 +8,15 @@
    ------------------------------------------------------------ */
 
 .journey {
-  --journey-height: 600vh;
+  /* O palco é `sticky` de uma tela dentro desta seção, e a seção rola por
+     `--journey-track`.
+
+     A altura **não é 600vh**: a rolagem termina onde a página está inteira. Com
+     600vh sobravam 72vh de barra sem nada atrás — a câmera travada no epílogo, a
+     nebulosa acesa e o card de contato já opaco. O número é
+     `JOURNEY_PRESENTED_AT × 500vh` (0,856 × 500 = 428), e `Journey3D.test`
+     falha se os dois saírem de sincronia. */
+  --journey-height: calc(100vh + 428vh);
   /* quanto a seção rola com o palco preso (a trilha da viagem) */
   --journey-track: calc(var(--journey-height) - 100vh);
   position: relative;
@@ -24,10 +32,6 @@
   z-index: 1;
   background: #05070f;
   isolation: isolate;
-}
-
-html:not(.dark) .journey__stage {
-  background: #fdfbf6;
 }
 
 .journey__canvas {
@@ -73,9 +77,12 @@ html:not(.dark) .journey__stage {
 .journey__card {
   position: absolute;
   z-index: 3;
-  /* a caixa é estreita de propósito: o elemento 3D mora a ±18 unidades do
-     eixo (journey.ts → place), e um card largo cobriria metade do corredor */
-  width: min(33rem, 42vw);
+  /* A caixa é estreita de propósito: o elemento 3D mora a ±18 unidades do eixo
+     (journey.ts → place), e um card largo cobriria metade do corredor. E ela
+     **encolheu** de 33rem para 26rem: a 33rem o card era da altura de meia tela
+     e a peça ao lado ficava espremida num canto. O corredor é a obra, não o
+     texto. */
+  width: min(26rem, 34vw);
   /* nasce escondido: o loop publica a pose real a cada quadro */
   opacity: 0;
   visibility: hidden;
@@ -103,8 +110,30 @@ html:not(.dark) .journey__stage {
 .journey__card--center {
   left: 50%;
   top: 50%;
-  width: min(30rem, 42vw);
+  width: min(24rem, 34vw);
   --journey-anchor: translate(-50%, -50%);
+}
+
+/* ---------- o card de contato: uma faixa no rodapé ---------- */
+
+/* O contato é o **destino**: a nebulosa é a peça do capítulo e ela é grande,
+   então o card não disputa o centro — ele vira uma faixa no rodapé, e é ela que
+   usa o eixo Y do deslocamento (mesma coreografia, outro eixo). */
+.journey__card--bottom {
+  left: 50%;
+  bottom: clamp(3.4rem, 7vh, 5rem);
+  top: auto;
+  width: min(52rem, 88vw);
+  --journey-anchor: translateX(-50%);
+  transform: var(--journey-anchor) translate3d(0, var(--journey-shift), 0)
+    scale(var(--journey-scale));
+}
+
+/* Nada de superfície aqui também — a herança já é transparente. O que muda é a
+   altura: a faixa é baixa de propósito, para sobrar nebulosa em volta. */
+.journey__card--bottom .journey__card-inner {
+  max-height: min(36vh, 20rem);
+  text-align: center;
 }
 
 /* Não existe mais "o primeiro card nasce visível": a página abre no prólogo do
@@ -113,21 +142,39 @@ html:not(.dark) .journey__stage {
 
 .journey__card-inner {
   /* altura contida: o card cabe na tela sem virar um painel de tela cheia */
-  max-height: min(58vh, 34rem);
+  max-height: min(52vh, 29rem);
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 1.1rem 1.2rem 1rem;
+  padding: 1rem 1.1rem 0.9rem;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--rule-strong);
-  background: color-mix(in srgb, var(--paper) 92%, transparent);
-  backdrop-filter: blur(14px) saturate(130%);
-  -webkit-backdrop-filter: blur(14px) saturate(130%);
-  box-shadow:
-    0 18px 50px rgba(4, 6, 15, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  /* **Sem superfície.** O card é uma moldura de vidro sobre a cena: fundo
+     transparente, sem desfoque e sem sombra. Antes eram 92% de papel com blur de
+     14px, e o resultado era uma placa opaca em cima da peça 3D — que é a obra.
+     O que sustenta a leitura não é o papel, e sim o halo escuro do texto:
+     os laboratórios são desenhados em giz claro sobre um quadro escuro, então um
+     halo na cor do fundo dá contraste em qualquer ponto do corredor sem
+     devolveu a parede de papel. */
+  border: 1px solid color-mix(in srgb, var(--rule-strong) 26%, transparent);
+  background: transparent;
+  text-shadow: 0 1px 3px color-mix(in srgb, var(--board-1) 82%, transparent);
   transition:
     border-color 0.28s var(--ease),
     box-shadow 0.28s var(--ease);
+}
+
+/* O que ainda precisa de superfície são as **peças com dados**: uma tabela, um
+   conjunto de números e um gráfico não se leem sobre um painel 3D em movimento
+   só com halo. Elas recebem papel próprio e curto — é o conteúdo que é opaco, não
+   o card. */
+.journey__card .controls,
+.journey__card .results,
+.journey__card .data-table,
+.journey__card .mini-chart,
+.journey__card .formula {
+  background: color-mix(in srgb, var(--paper) 72%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border-radius: var(--radius-md);
 }
 
 /* o scale do pose (cardPose) já é publicado no card; um transform no inner
@@ -151,13 +198,15 @@ html:not(.dark) .journey__stage {
   background: linear-gradient(180deg, var(--accent), var(--gold));
 }
 
-/* ---------- placa-título do prólogo (o buraco negro) ---------- */
+/* ---------- placa do prólogo e do epílogo (buraco negro e buraco branco) --- */
 
-/* A placa vive sobre o véu preto do buraco em **qualquer** tema, então não
-   usa token de papel: no tema escuro `--paper` é #14131a e o texto sumiria
-   sobre o preto. Tudo aqui é branco com alfa. A opacidade vem do loop
-   (`prologueOpacity`), nada de animação própria. */
-.journey__prologue {
+/* As duas placas são o mesmo instrumento: uma frase que abre e outra que fecha a
+   viagem. A do prólogo vive sobre o véu preto do buraco, então não usa token de
+   papel: `--paper` é #14131a e o texto sumiria sobre o preto. Tudo aqui é branco
+   com alfa. A opacidade vem do loop (`prologueOpacity` / `epilogueOpacity`),
+   nada de animação própria. */
+.journey__prologue,
+.journey__epilogue {
   position: absolute;
   z-index: 2;
   left: 50%;
@@ -170,6 +219,13 @@ html:not(.dark) .journey__stage {
   pointer-events: none;
   color: #fff;
   text-shadow: 0 2px 26px rgba(0, 0, 0, 0.9);
+  opacity: 0;
+}
+
+/* o epílogo nasce já no fim do quadro, quando a poeira do corredor já está
+   brilhando: o texto vem um pouco mais alto para não competir com o núcleo */
+.journey__epilogue {
+  bottom: clamp(3rem, 9vh, 5.5rem);
 }
 
 .journey__prologue-eyebrow {
@@ -200,6 +256,16 @@ html:not(.dark) .journey__stage {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+/* no epílogo o vão não faria sentido: o buraco branco **ilumina** o texto por
+   baixo, e a página está a caminho do branco — o título é branco sólido */
+.journey__epilogue .journey__prologue-title {
+  background: none;
+  color: #fff;
+  text-shadow:
+    0 2px 26px rgba(0, 0, 0, 0.9),
+    0 0 60px rgba(255, 253, 244, 0.55);
 }
 
 .journey__prologue-note {
@@ -271,6 +337,92 @@ html:not(.dark) .journey__stage {
   color: var(--ink-faint);
 }
 
+/* ---------- o conteúdo de contato (a faixa do rodapé) ---------- */
+
+.contact__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* O card de contato é transparente (ver `.journey__card--bottom`), então cada
+   peça aqui carrega a **própria** superfície: com o papel do card embaixo, 70% e
+   60% bastavam; sem ele, o brilho da nebulosa atravessava os botões. Estes dois
+   valores são o que segura a leitura depois da remoção. */
+.contact__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--paper-raised) 82%, transparent);
+  color: var(--ink);
+  font-size: 0.84rem;
+  font-weight: 600;
+  transition:
+    border-color 0.2s var(--ease),
+    background 0.2s var(--ease),
+    transform 0.2s var(--ease);
+}
+
+.contact__btn:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  transform: translateY(-1px);
+}
+
+/* o raio do portfólio é a única marca com cor própria */
+.contact__btn--mark img {
+  display: block;
+}
+
+.contact__out {
+  opacity: 0.5;
+}
+
+.contact__about {
+  overflow: hidden;
+  margin-top: 0.75rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--paper) 74%, transparent);
+  text-align: left;
+}
+
+/* O `lead` é o único texto do card que **não** tem superfície nenhuma atrás: ele
+   flutua direto sobre a nebulosa, que é brilhante e de cor variável. O halo
+   escuro é o que garante contraste — sem ele, a frase acende ou apaga conforme
+   qual parte do gás passa por trás dela. */
+.contact__lead {
+  max-width: 34rem;
+  margin: 0 auto 0.9rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  text-shadow:
+    0 1px 3px color-mix(in srgb, var(--board-1) 78%, transparent),
+    0 2px 14px color-mix(in srgb, var(--board-1) 62%, transparent);
+}
+
+.contact__about p {
+  max-width: 40rem;
+  margin: 0 auto;
+  font-size: 0.84rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.contact__about-meta {
+  margin-top: 0.5rem !important;
+  font-family: var(--font-mono);
+  font-size: 0.7rem !important;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint) !important;
+}
+
 /* ---------- o conteúdo real dentro do card ---------- */
 
 /* as seções foram desenhadas para a página larga: dentro do card elas
@@ -331,16 +483,57 @@ html:not(.dark) .journey__stage {
   background: var(--accent-soft);
 }
 
+/* A navegação da sessão: "Anterior · N de M · Próximo".
+   Vive **fora** do painel que remonta a cada questão (ver o comentário em
+   `LabSection`): dentro, o botão clicado seria destruído junto com a questão. */
+.journey__card .rail__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed color-mix(in srgb, var(--rule-strong) 45%, transparent);
+}
+
+.journey__card .rail__nav button {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--rule-strong) 60%, transparent);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--paper) 60%, transparent);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition:
+    border-color 0.2s var(--ease),
+    background 0.2s var(--ease);
+}
+
+.journey__card .rail__nav button:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* desabilitado nas pontas: fechar o ciclo faria a última questão trocar pela
+   primeira sem sinal nenhum de que a sessão acabou */
+.journey__card .rail__nav button:disabled {
+  opacity: 0.32;
+  cursor: not-allowed;
+}
+
+.journey__card .rail__pos {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+
 .journey__card .compare,
 .journey__card .overview__grid,
 .journey__card .overview__grid--flip,
-.journey__card .footer__grid--3d,
 .journey__card .formulas {
   grid-template-columns: 1fr;
-}
-
-.journey__card .footer__cube-wrap {
-  display: none;
 }
 
 /* ---------- densidade: o mesmo conteúdo, bem mais compacto ---------- */
@@ -546,7 +739,7 @@ html:not(.dark) .journey__stage {
 
 @media (max-width: 1200px) {
   .journey__card {
-    width: min(30rem, 46vw);
+    width: min(24rem, 42vw);
   }
 
   /* no celular a placa sobe: a régua e o "voltar ao topo" ocupam o rodapé */
@@ -571,24 +764,49 @@ html:not(.dark) .journey__stage {
 
 @media (max-width: 768px) {
   .journey {
-    --journey-height: 540vh;
+    /* Mesma conta do desktop, com a rolagem encurtada: o celular rola 10% menos
+       (540 contra 600 era a proporção de projeto), então a trilha é
+       428vh × 0,9 = 385vh. Sem isto sobrariam 12vh de rolagem morta aqui — o
+       mesmo bug, menor. */
+    --journey-height: calc(100vh + 385vh);
   }
 
   /* no estreito todo card é centralizado, com a largura da tela */
   .journey__card,
   .journey__card--left,
   .journey__card--right,
-  .journey__card--center {
+  .journey__card--center,
+  .journey__card--bottom {
     left: 50%;
     right: auto;
     top: 50%;
-    width: 92vw;
+    bottom: auto;
+    width: 86vw;
     --journey-anchor: translate(-50%, -50%);
   }
 
+  /* a faixa do contato volta a ser uma coluna no celular: com 4 botões e a caixa
+     de "sobre" abaixo, ela não cabe em uma linha só */
+  .journey__card--bottom {
+    left: 50%;
+    top: auto;
+    bottom: clamp(3.2rem, 7vh, 4.5rem);
+    width: 90vw;
+    --journey-anchor: translateX(-50%);
+  }
+
+  .journey__card--bottom .journey__card-inner {
+    max-height: min(44vh, 20rem);
+  }
+
   .journey__card-inner {
-    max-height: min(64vh, 30rem);
-    padding: 0.95rem 1.05rem 0.85rem;
+    max-height: min(56vh, 25rem);
+    padding: 0.85rem 0.95rem 0.75rem;
+    /* A base de todo o texto do card. Boa parte do conteúdo dos laboratórios é
+       herdado e por isso responde a isso; o que tem `rem` fixo está listado
+       abaixo, um por um. 0,9rem dá ~10% a menos em todo o corpo — o suficiente
+       para o cartão de largura curta render mais linhas sem scroll interno. */
+    font-size: 0.9rem;
   }
 
   /* no celular não há peça 3D ao lado: o card pode usar a tela toda */
@@ -602,16 +820,63 @@ html:not(.dark) .journey__stage {
   }
 
   .journey__card .section-head h2 {
-    font-size: clamp(1.25rem, 5.5vw, 1.6rem);
+    font-size: clamp(1.1rem, 5vw, 1.35rem);
     margin: 0 0 0.4rem;
   }
 
   .journey__card .section-head p {
-    font-size: 0.9rem;
+    font-size: 0.82rem;
+  }
+
+  /* O resto do que tem `rem` fixo na densidade do desktop. A base de 0,9rem
+     acima não alcança estes: cada um declara o próprio tamanho. */
+  .journey__card .rail button {
+    font-size: 0.74rem;
+  }
+
+  .journey__card .rail__nav button {
+    font-size: 0.72rem;
+  }
+
+  .journey__card .qcard__head h3 {
+    font-size: 1rem;
+  }
+
+  .journey__card .qcard__prompt {
+    font-size: 0.78rem;
+  }
+
+  .journey__card .result__value {
+    font-size: 0.94rem;
+  }
+
+  .journey__card .data-table {
+    font-size: 0.74rem;
+  }
+
+  .journey__card .panel h3 {
+    font-size: 0.98rem !important;
+  }
+
+  .journey__card .flip-card__face h3 {
+    font-size: 0.92rem;
+  }
+
+  .journey__card .mini-chart {
+    height: 64px;
+  }
+
+  /* a trilha encolhe junto: três abas rotuladas não cabem em 86vw */
+  .journey__card .rail {
+    gap: 0.25rem;
+  }
+
+  .journey__card .rail button {
+    flex: 1 1 30%;
   }
 
   .journey__card .flip-card {
-    height: 200px;
+    height: 176px;
   }
 
   .journey__meter {

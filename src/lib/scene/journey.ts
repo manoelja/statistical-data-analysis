@@ -11,9 +11,10 @@
  * corredor de exhibitions. `JOURNEY_LEAD` é essa reta de partida, `depthAt` é
  * a única ponte entre scroll e Z.
  *
- * Cada etapa tem também o seu **elemento 3D** — os mesmos seis do antigo
- * laboratório (tabela de frequências, dados, histograma, nuvem de dispersão,
- * cubo de fórmulas e diagrama de Venn), reaproveitados como cenas do corredor.
+ * Cada etapa tem também o seu **elemento 3D** — os do antigo laboratório
+ * (tabela de frequências, dados, histograma, nuvem de dispersão e cubo de
+ * fórmulas), reaproveitados como cenas do corredor. O contato não tem peça de
+ * laboratório: a dele é a nebulosa, plantada no fundo do corredor.
  *
  * Como no resto do motor de cena, nada aqui desenha: o `journey` monta o grafo
  * de objetos e sabe avançar a animação (quem renderiza é o `viewer`). Os
@@ -35,12 +36,13 @@ import { createFloatingFormula } from './three/formulas';
 import { clamp, damp, lerp } from './three/math';
 import { disposeObject } from './three/shared';
 import { createBlackHole, type HolePhase } from './three/blackhole';
+import { createWhiteHole, WHITE_HOLE_STOP } from './three/whitehole';
 import { createCubeExhibit } from './three/cube';
 import { createDiceExhibit } from './three/dice';
 import { createFrequencyExhibit } from './three/frequency';
 import { createHistogramExhibit } from './three/histogram';
 import { createScatterExhibit } from './three/scatter';
-import { createVennExhibit } from './three/venn';
+import { createNebula } from './three/nebula';
 import type { BuildContext, Exhibit, Frame } from './three/types';
 
 /** Profundidade do corredor defim dos seis capítulos: 0 → -2500. */
@@ -58,8 +60,25 @@ export const JOURNEY_SPAN = JOURNEY_LEAD + JOURNEY_DEPTH;
 /** Centro do buraco negro, no eixo do corredor. */
 export const HOLE_Z = 0;
 
-/** Duração do fade-in/out dos cards, em fração do progresso total. */
-export const CARD_FADE = 0.04;
+/**
+ * Centro do **buraco branco**, no fim da viagem: a mesma profundidade onde a
+ * câmera termina (`depthAt(1)`).
+ *
+ * A câmera **não pode parar dentro dele** — ou o núcleo tem de ser marcado com
+ * `letCameraPass` (como a sombra do buraco negro), porque o teste que varre a
+ * viagem inteira acusa a câmera de atravessar peça sólida.
+ */
+export const WHITE_HOLE_Z = -JOURNEY_DEPTH;
+
+/**
+ * Duração do fade-in/out dos cards, em fração do progresso total.
+ *
+ * `0,03` e não `0,04` por causa do card de contato: ele entra logo depois do
+ * estouro do buraco branco e precisa estar **clickável antes** de a nebulosa
+ * acabar de acender (ver `JOURNEY_CHAPTERS`), senão sobra rolagem entre "a
+ * nebulosa está inteira" e "os botões existem".
+ */
+export const CARD_FADE = 0.03;
 
 /** Altura de voo da câmera — acima das peças, para não atravessá-las. */
 const CAMERA_HEIGHT = 12;
@@ -155,7 +174,7 @@ export function rewindEnvelope(elapsed: number): number {
   return out >= 1 ? 0 : 1 - ease(out);
 }
 
-export type CardSide = 'left' | 'right' | 'center';
+export type CardSide = 'left' | 'right' | 'center' | 'bottom';
 
 export interface JourneyChapter {
   /** id do marcador no DOM (alvo de âncora do navbar) */
@@ -181,19 +200,25 @@ export interface JourneyChapter {
  * deixam um respiro entre um card e o seguinte (tempo de a câmera "viajar").
  *
  * As profundidades começam em -420, bem depois do prólogo: com `JOURNEY_LEAD`
- * as âncoras ficam em 0,28 · 0,41 · 0,55 · 0,68 · 0,81 · 0,94 — quase
+ * as âncoras ficam em 0,28 · 0,41 · 0,55 · 0,68 · 0,76 · 0,96 — quase
  * uniformes, porque o espaçamento do corredor também é. O `enter` da primeira
  * etapa é 0,225, depois de `HOLE_REVEAL_END`: o capítulo 1 só aparece quando o
  * "outro universo" dos dados já está formado.
+ *
+ * **O fim tem duas viradas.** Depois do capítulo 5 vem o *epílogo* (o buraco
+ * branco, `EPILOGUE_START` a 0,80) e só então o capítulo de contato, que é o
+ * destino: ele fecha em 1 e nunca sai. A nebulosa que dá o nome à última sala
+ * nasce **no mesmo lugar onde o buraco branco estava**, quando o branco do
+ * estouro baixa — a peça não chega de fora, ela é o que sobrou da explosão.
  */
 export const JOURNEY_CHAPTERS: JourneyChapter[] = [
   {
     id: 'visao',
     title: 'Visão Geral',
     tagline: 'Da teoria dos dados à prática',
-    z: -420,
+    z: -390,
     enter: 0.225,
-    exit: 0.34,
+    exit: 0.32,
     side: 1,
     cardSide: 'left',
   },
@@ -201,9 +226,9 @@ export const JOURNEY_CHAPTERS: JourneyChapter[] = [
     id: 'probabilidade',
     title: 'Parte 1 — Probabilidade',
     tagline: 'Binomial, Poisson e Normal',
-    z: -800,
-    enter: 0.355,
-    exit: 0.47,
+    z: -709,
+    enter: 0.335,
+    exit: 0.43,
     side: -1,
     cardSide: 'right',
   },
@@ -211,9 +236,9 @@ export const JOURNEY_CHAPTERS: JourneyChapter[] = [
     id: 'inferencia',
     title: 'Parte 2 — Inferência',
     tagline: 'Intervalos de confiança e testes de hipótese',
-    z: -1180,
-    enter: 0.49,
-    exit: 0.6,
+    z: -1028,
+    enter: 0.445,
+    exit: 0.54,
     side: 1,
     cardSide: 'left',
   },
@@ -221,9 +246,9 @@ export const JOURNEY_CHAPTERS: JourneyChapter[] = [
     id: 'resultados',
     title: 'Resultados',
     tagline: 'O intervalo cobriu o parâmetro?',
-    z: -1560,
-    enter: 0.62,
-    exit: 0.73,
+    z: -1347,
+    enter: 0.555,
+    exit: 0.65,
     side: -1,
     cardSide: 'right',
   },
@@ -231,9 +256,9 @@ export const JOURNEY_CHAPTERS: JourneyChapter[] = [
     id: 'formulario',
     title: 'Formulário',
     tagline: 'A "cola" que resolve tudo',
-    z: -1940,
-    enter: 0.755,
-    exit: 0.86,
+    z: -1666,
+    enter: 0.665,
+    exit: 0.76,
     side: 1,
     cardSide: 'left',
   },
@@ -241,13 +266,38 @@ export const JOURNEY_CHAPTERS: JourneyChapter[] = [
     id: 'contato',
     title: 'Contato',
     tagline: 'SINASC/DataSUS · R 4.6.0',
-    z: -2320,
-    enter: 0.895,
+    z: -2400,
+    // Sobe logo depois do estouro: o branco já cobre ~97% do quadro quando o
+    // card começa a aparecer, então ele **materializa** conforme o flash
+    // clareia, em vez de deslizar por cima do disco de ejeção. E como a
+    // nebulosa precisa de 0,016 de progresso depois para acender inteiro, o
+    // card entra em 0,826 para ficar clickável (`opacity > 0.4`) **antes**
+    // dela — rolagem extra para achá-los: zero.
+    enter: 0.826,
     exit: 1,
-    side: -1,
-    cardSide: 'center',
+    side: 1,
+    cardSide: 'bottom',
   },
 ];
+
+/**
+ * Progresso em que a página está **inteiramente apresentada**: o instante em que
+ * o último card termina de entrar.
+ *
+ * ## Por que isto existe
+ *
+ * A janela do último capítulo vai até `exit = 1`, mas o card fica opaco
+ * `CARD_FADE` depois de `enter` — e **depois disso nada mais acontece**: a câmera
+ * está travada no epílogo, a nebulosa já acendeu e o card não se move. Com
+ * `exit = 1` como fim do scroll, isso deixava **72vh de rolagem morta**: dava para
+ * arrastar a barra até o fim e a nebulosa não mudava em nada.
+ *
+ * O número é derivado, não escolhido: se alguém mexer na janela do contato,
+ * o fim do scroll acompanha. A barra de rolagem é montada para terminar aqui —
+ * ver `--journey-height` em `journey.css` e `scrollProgress` em `Journey3D`.
+ */
+export const JOURNEY_PRESENTED_AT =
+  JOURNEY_CHAPTERS[JOURNEY_CHAPTERS.length - 1].enter + CARD_FADE;
 
 /**
  * A única ponte entre o scroll e o eixo Z: a câmera parte de `+JOURNEY_LEAD`
@@ -314,6 +364,88 @@ export function prologueOpacity(progress: number): number {
   return clamp((1 - approach * 1.35) * (1 - reveal), 0, 1);
 }
 
+/* ============================================================
+   Epílogo: o buraco branco
+   ============================================================ */
+
+/** Onde a página deixa de ser capítulo e vira epílogo: a saída da etapa **antes**
+ * do contato. O contato é o destino — ele vem depois do buraco branco.
+ */
+export const EPILOGUE_START = JOURNEY_CHAPTERS[JOURNEY_CHAPTERS.length - 2].exit;
+
+/**
+ * Para onde a câmera **olha** durante o epílogo (unidades de cena).
+ *
+ * Negativo de propósito: a câmera fica em y ≈ 6 e a peça em y = 0, então mirar
+ * abaixo **ergue** a peça na tela sem movê-la no mundo. É o que tira o olho de
+ * trás da faixa de contato — e o que mantém a nebulosa a zero distância do buraco
+ * branco, que é onde ela tem que estar. A conta dá ~20% acima do centro do
+ * quadro a 100 unidades, que é o céu que sobra acima do card.
+ */
+const EPILOGUE_AIM_Y = -21;
+
+/**
+ * As três pernas do epílogo, em progresso. Juntas, elas fecham em
+ * `JOURNEY_CHAPTERS[last].enter`: depois disso é o capítulo de contato.
+ */
+const GATHER = 0.03;
+const BURST = 0.04;
+const AFTERGLOW = 0.035;
+
+export interface EmitPhase {
+  /** a poeira do corredor converge para o ponto final: 0 → 1 */
+  gather: number;
+  /** o clarão branco toma o quadro: 0 → 1 */
+  burst: number;
+  /** o branco baixa de novo e a nebulosa nasce no lugar do buraco: 0 → 1 */
+  afterglow: number;
+  /** para onde a câmera olha (o corredor × o buraco branco) */
+  aim: number;
+}
+
+/**
+ * Coreografia do epílogo, em função do scroll — a mesma forma de `holePhase`.
+ *
+ * Um buraco branco é o buraco negro com o tempo invertido: o mesmo disco de
+ * partículas, com o raio **fechando** em vez de abrindo. aqui mora só o roteiro
+ * (função pura, testável, com o mesmo cuidado do prólogo: `reduced-motion`
+ * precisa do mesmo caminho). O desenho vem na etapa seguinte, em
+ * `three/whitehole.ts`.
+ *
+ * O olhar vira para o buraco branco enquanto a poeira converge e **volta** para
+ * o corredor no começo do estouro — é o branco que cobre a virada, como o
+ * clarão do prólogo escondia a volta da câmera.
+ */
+export function emitPhase(progress: number): EmitPhase {
+  const value = clamp(progress, 0, 1);
+  const start = EPILOGUE_START;
+  if (value <= start) return { gather: 0, burst: 0, afterglow: 0, aim: 0 };
+
+  const gatherEnd = start + GATHER;
+  const burstEnd = gatherEnd + BURST;
+  const gather = ease(clamp((value - start) / GATHER, 0, 1));
+  const burst = ease(clamp((value - gatherEnd) / BURST, 0, 1));
+  const afterglow = ease(clamp((value - burstEnd) / AFTERGLOW, 0, 1));
+
+  return { gather, burst, afterglow, aim: gather * (1 - burst) * (1 - afterglow) };
+}
+
+/**
+ * Opacidade da placa do epílogo. É o espelho de `prologueOpacity`: a frase
+ * entra com a convergência (quando o buraco branco ainda está no quadro) e sai
+ * com o estouro — o branco é que fecha a página, e texto sobre branco não se lê.
+ *
+ * O coeficiente do estouro é **maior** que o da entrada (2,5 contra 2,4) de
+ * propósito: com iguais, `2,4 − 2,2` deixa a frase em 20% de opacidade exatamente
+ * no fim do scroll, ou seja, um fantasma sobre o branco.
+ */
+export function epilogueOpacity(progress: number): number {
+  const { gather, burst, afterglow } = emitPhase(progress);
+  // o afterglow também derruba a frase: a nebulosa já está acendendo no mesmo
+  // quadro, e duas legendas competindo é pior que uma só
+  return clamp(gather * 2.4 - burst * 2.5 - afterglow * 1.2, 0, 1);
+}
+
 /** Índice da etapa cujo centro de janela está mais perto de um progresso. */
 export function chapterIndexAt(progress: number): number {
   const value = clamp(progress, 0, 1);
@@ -333,9 +465,9 @@ export function chapterIndexAt(progress: number): number {
 export interface CardPose {
   /** 0 = escondido, 1 = totalmente visível */
   opacity: number;
-  /** deslocamento horizontal em % da largura do card (negativo = esquerda) */
+  /** deslocamento em % (no eixo X, ou no Y quando o card é `bottom`) */
   shift: number;
-  /** escala (o card de contato cresce ao aparecer) */
+  /** escala */
   scale: number;
 }
 
@@ -376,7 +508,10 @@ export function cardPose(index: number, progress: number): CardPose {
     opacity = 1 - t;
   }
 
-  const lateral = chapter.cardSide === 'center' ? 0 : chapter.cardSide === 'left' ? -1 : 1;
+  // `center` não desliza (é um painel no meio); `bottom` desliza no eixo Y (o CSS
+  // troca o eixo do transform), então o sinal é invertido para ele subir de baixo
+  const lateral =
+    chapter.cardSide === 'center' ? 0 : chapter.cardSide === 'bottom' ? -1 : chapter.cardSide === 'left' ? -1 : 1;
   const eased = phase * phase * (3 - 2 * Math.abs(phase));
 
   return {
@@ -386,10 +521,22 @@ export function cardPose(index: number, progress: number): CardPose {
   };
 }
 
-/** Progresso em que a câmera chega ao centro da etapa `index`. */
+/**
+ * Onde a câmera chega ao centro da etapa `index` — em **fração da rolagem**, não
+ * em progresso.
+ *
+ * A conversão por `JOURNEY_PRESENTED_AT` é o que amarra a âncora ao fim real do
+ * scroll: como o scroll vai de 0 a `JOURNEY_PRESENTED_AT` (e não até 1), um
+ * progresso puro apontaria para um lugar que a página não tem mais.
+ *
+ * O `clamp` no topo não é defensivo, é necessário: a etapa de contato fica a
+ * `0,966` de progresso, que em fração de scroll dá `1,13` — ou seja, além do
+ * fim. A âncora de uma etapa tem de ser um lugar alcançável, e o certo para o
+ * contato é o fim da rolagem, que é exatamente onde ele está inteiro.
+ */
 export function chapterAnchor(index: number): number {
   const chapter = JOURNEY_CHAPTERS[clamp(Math.round(index), 0, JOURNEY_CHAPTERS.length - 1)];
-  return progressAt(chapter.z);
+  return clamp(progressAt(chapter.z) / JOURNEY_PRESENTED_AT, 0, 1);
 }
 
 interface ScenePart {
@@ -401,10 +548,18 @@ interface ScenePart {
   /** escala base (a responsiva é aplicada por cima) */
   scale: number;
   /**
-   * `reveal` é a fase da revelação do prólogo: só a entrada o usa, para acender
-   * o título junto com a poeira. As peças do corredor a ignoram.
+   * Y próprio da peça. Só a nebulosa usa, e é `0` de propósito: ela não é uma
+   * peça do corredor, é a **mesma** peça do buraco branco, no mesmo milímetro —
+   * a substituindo. Quem a ergue na tela é o olhar da câmera, não ela.
    */
-  update(t: number, dt: number, focus: number, reveal: number): void;
+  lift?: number;
+  /**
+   * `reveal` é a fase da revelação do prólogo: só a entrada o usa, para acender
+   * o título junto com a poeira. `emit` é o *afterglow* do epílogo: só a
+   * nebulosa o usa, para nascer quando o branco do buraco branco baixa. As
+   * peças do corredor ignoram os dois.
+   */
+  update(t: number, dt: number, focus: number, reveal: number, emit?: number): void;
 }
 
 export interface Journey {
@@ -418,30 +573,57 @@ export interface Journey {
   dispose(): void;
 }
 
-/** Luminância perceptual do hex — decide o tema claro/escuro da cena. */
-function isDarkPalette(hex: string): boolean {
-  const color = new THREE.Color(hex);
-  return 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b < 0.25;
-}
-
 /* ============================================================
    Entrada: texto gigante + símbolos matemáticos
    ============================================================ */
+
+/**
+ * Altura da placa do título. Lado a lado o bloco ficou bem mais largo, então a
+ * letra cede um pouco para a linha caber no quadro sem virar uma parede.
+ */
+const TITLE_HEIGHT = 12;
+
+/** Folga entre as duas palavras do título, em unidades de cena. */
+const TITLE_GAP = 2;
+
+/** Onde o título paira, à frente do observador da primeira etapa. */
+const TITLE_Y = 20;
+const TITLE_Z = 40;
 
 function buildEntrance(ctx: BuildContext): ScenePart {
   const group = new THREE.Group();
   const palette = ctx.palette;
 
-  const { sprite, plate } = createChalkSprite(
-    [
-      { text: 'DATA', size: 150, color: palette.chalk, gap: 0.02 },
-      { text: 'SCIENCE', size: 150, color: palette.cyan, gap: 0 },
-    ],
-    { worldHeight: 26, align: 'left' },
-  );
-  ctx.plates.push(plate);
-  sprite.position.set(8, 20, 40);
-  group.add(sprite);
+  // "DATA SCIENCE" numa **linha só**, com as duas cores do título: cada palavra
+  // é uma placa, e as duas se encostam pela largura **já escalada** da placa —
+  // quando a fonte web chega e as placas mudam de tamanho, elas se realinham.
+  const words = [
+    { text: 'DATA', color: palette.chalk },
+    { text: 'SCIENCE', color: palette.cyan },
+  ].map((word) => {
+    const made = createChalkSprite(
+      [{ text: word.text, size: 150, color: word.color, gap: 0 }],
+      { worldHeight: TITLE_HEIGHT, align: 'left' },
+    );
+    ctx.plates.push(made.plate);
+    group.add(made.sprite);
+    return made;
+  });
+
+  const lineUp = () => {
+    // `scale.x` e não a largura da placa: a placa nasce em pixels de canvas e o
+    // sprite é escalado para `worldHeight` — a escala é quem manda na tela.
+    const widths = words.map((word) => word.sprite.scale.x);
+    const total = widths.reduce((sum, width) => sum + width, 0) + TITLE_GAP;
+    let cursor = -total / 2;
+    words.forEach((word, index) => {
+      word.sprite.position.set(cursor + widths[index] / 2, TITLE_Y, TITLE_Z);
+      cursor += widths[index] + TITLE_GAP;
+    });
+  };
+  // a placa avisa quem mudou de tamanho **depois** de se escalar
+  words.forEach((word) => word.plate.onResize(lineUp));
+  lineUp();
 
   const symbols = [
     '\\sum_{i=1}^{n} x_i',
@@ -473,7 +655,9 @@ function buildEntrance(ctx: BuildContext): ScenePart {
       // o título "acende" com a poeira: entra no meio da queda do clarão,
       // quando o branco ainda está alto o bastante para ler como revelação
       const ignite = 0.15 + 0.85 * clamp(reveal * 1.6, 0, 1);
-      sprite.material.opacity = ignite * (0.86 + 0.14 * Math.abs(drift(t * 0.4, 3)));
+      words.forEach((word) => {
+        word.sprite.material.opacity = ignite * (0.86 + 0.14 * Math.abs(drift(t * 0.4, 3)));
+      });
       symbols.forEach((symbol) => {
         symbol.sprite.material.opacity = ignite * 0.9;
       });
@@ -522,33 +706,28 @@ function buildExhibitPart(
 
 export function buildJourney(palette: ChalkPalette, params: SceneParams): Journey {
   const scene = new THREE.Scene();
-  const dark = isDarkPalette(palette.board1);
 
-  const background = createGradientTexture(
-    dark
-      ? [
-          [0, '#05070f'],
-          [0.45, '#0a1226'],
-          [1, '#04050a'],
-        ]
-      : [
-          [0, '#fdfbf6'],
-          [0.55, '#f2ece0'],
-          [1, '#e4dccb'],
-        ],
-  );
+  // A cena é o espaço da jornada: vazio escuro do começo ao fim.
+  const background = createGradientTexture([
+    [0, '#05070f'],
+    [0.45, '#0a1226'],
+    [1, '#04050a'],
+  ]);
   scene.background = background;
   // FogExp2: o que está longe perde contraste e "afunda" na profundidade
-  scene.fog = new THREE.FogExp2(new THREE.Color(palette.board1), dark ? 0.0034 : 0.0026);
+  scene.fog = new THREE.FogExp2(new THREE.Color(palette.board1), 0.0034);
 
-  const camera = new THREE.PerspectiveCamera(55, 1.6, 0.1, 620);
+  // O `far` precisa alcançar as estrelas de fundo do prólogo (esfera de 1100
+  // unidades): com 620 o céu acabava num arco visível bem antes do fim da
+  // viagem. O `near` continua apertado porque quem decide a precisão é ele.
+  const camera = new THREE.PerspectiveCamera(55, 1.6, 0.1, 1400);
   camera.position.set(0, CAMERA_HEIGHT, JOURNEY_LEAD);
 
   // ---- luzes: ambiente + hemisférica + direcional + uma por etapa ----
-  scene.add(new THREE.AmbientLight(palette.chalk, dark ? 0.6 : 0.95));
-  scene.add(new THREE.HemisphereLight(palette.cyan, palette.board1, dark ? 0.5 : 0.75));
+  scene.add(new THREE.AmbientLight(palette.chalk, 0.6));
+  scene.add(new THREE.HemisphereLight(palette.cyan, palette.board1, 0.5));
 
-  const key = new THREE.DirectionalLight(palette.chalk, dark ? 1.1 : 1.3);
+  const key = new THREE.DirectionalLight(palette.chalk, 1.1);
   key.position.set(24, 46, 60);
   scene.add(key);
 
@@ -576,12 +755,19 @@ export function buildJourney(palette: ChalkPalette, params: SceneParams): Journe
       size: 0.9,
       map: createDotTexture(palette.chalk),
       transparent: true,
-      opacity: dark ? 0.55 : 0.4,
+      opacity: 0.55,
       depthWrite: false,
       sizeAttenuation: true,
     }),
   );
   scene.add(dust);
+
+  // A poeira do corredor tem duas vidas: no prólogo ela **acende** com o disco
+  // virando o universo de dados; no epílogo ela começa a **convergir** para o
+  // buraco branco. As duas cores são pré-calculadas: `lerpColors` não aloca, e
+  // este laço roda a 60 fps.
+  const dustCold = new THREE.Color(palette.chalk);
+  const dustHot = new THREE.Color('#ffffff');
 
   // ---- contexto das peças: o mesmo que alimenta o buraco negro ----
   const ctx: BuildContext = { palette, plates: [], params };
@@ -593,6 +779,12 @@ export function buildJourney(palette: ChalkPalette, params: SceneParams): Journe
   // os véus viajam com a câmera: cobrem sempre o mesmo campo de visão
   camera.add(hole.flare, hole.void);
 
+  // ---- epílogo: o buraco branco no fundo do corredor ----
+  const white = createWhiteHole(ctx);
+  white.group.position.set(0, 0, WHITE_HOLE_Z);
+  scene.add(white.group);
+  camera.add(white.flash);
+
   // ---- estado do controlador ----
   let time = 0;
   let playing = true;
@@ -601,6 +793,7 @@ export function buildJourney(palette: ChalkPalette, params: SceneParams): Journe
   const pointerRef = { x: 0, y: 0 };
   const lookTarget = new THREE.Vector3();
   const holeTarget = new THREE.Vector3();
+  const whiteTarget = new THREE.Vector3();
   const holeCenter = new THREE.Vector3(0, 0, HOLE_Z);
 
   // ---- o rebobininho: ao entrar na bola preta, um passo para trás ----
@@ -625,14 +818,40 @@ export function buildJourney(palette: ChalkPalette, params: SceneParams): Journe
     { exhibit: createHistogramExhibit(ctx), chapter: JOURNEY_CHAPTERS[2] },
     { exhibit: createScatterExhibit(ctx), chapter: JOURNEY_CHAPTERS[3] },
     { exhibit: createCubeExhibit(ctx), chapter: JOURNEY_CHAPTERS[4] },
-    { exhibit: createVennExhibit(ctx), chapter: JOURNEY_CHAPTERS[5] },
+    // (o contato não tem peça de laboratório: a peça dele é a nebulosa, mais
+    // abaixo — o Venn saiu de cena)
   ];
+
+  // A nebulosa não é um `Exhibit` (não tem clique nem leitura): é a peça de
+  // chegada, plantada **no eixo** e no mesmo ponto onde o buraco branco estava,
+  // de onde ela acende quando o branco do estouro baixa.
+  const nebula = createNebula(ctx);
 
   const entrance = buildEntrance(ctx);
   const parts: ScenePart[] = [
     entrance,
     ...themes.map((theme) => buildExhibitPart(theme.exhibit, theme.chapter, context)),
+    // A nebulosa entra na lista como peça do contato (mesmo `place()`, mesmo
+    // `focus`, mesmo descarte), mas plantada no **z do buraco branco**: é
+    // literalmente o mesmo ponto do corredor, com a mesma peça no lugar.
+    // `viewZ` é o ponto de observação da câmera; a peça fica `EXHIBIT_LEAD`
+    // à frente dele, e por isso o `+ EXHIBIT_LEAD` abaixo.
+    {
+      group: nebula.group,
+      viewZ: WHITE_HOLE_Z + EXHIBIT_LEAD,
+      side: 0,
+      scale: 1,
+      // zero distância do buraco branco: mesma posição, peça trocada
+      lift: 0,
+      update: (t, dt, focus, _reveal, emit) => nebula.update(t, dt, focus, emit ?? 0),
+    },
   ];
+  // A câmera **não atravessa** a nebulosa, e não por acaso: `WHITE_HOLE_STOP`
+  // (a trava do epílogo) já a deixa `WHITE_HOLE_STOP` unidades antes do buraco
+  // branco — que agora é onde a nebulosa acende. O usuário chega, vê o olho e
+  // fica parado na frente dele: atravessar um olho seria perder justamente o
+  // ponto de vista que a peça construiu.
+  nebula.group.userData.letCameraPass = false;
   parts.forEach((part) => scene.add(part.group));
 
   // posiciona cada peça à frente da etapa, fora do eixo da câmera
@@ -642,7 +861,11 @@ export function buildJourney(palette: ChalkPalette, params: SceneParams): Journe
     const lateral = narrow ? 12 : 18;
     const scale = narrow ? 0.7 : 1;
     parts.forEach((part) => {
-      part.group.position.set(part.side * lateral, EXHIBIT_LIFT, part.viewZ - EXHIBIT_LEAD);
+      part.group.position.set(
+        part.side * lateral,
+        part.lift ?? EXHIBIT_LIFT,
+        part.viewZ - EXHIBIT_LEAD,
+      );
       part.group.scale.setScalar(part.scale * scale);
     });
   };
@@ -660,6 +883,11 @@ export function buildJourney(palette: ChalkPalette, params: SceneParams): Journe
     // ---- prólogo: a fase vem do alvo de scroll, não de um relógio ----
     const progress = progressAt(targetZ);
     const phase = holePhase(progress);
+    // ---- epílogo: a mesma coisa, do outro lado ----
+    const emit = emitPhase(progress);
+    // `gather` satura em 1 e **fica**: a partir daqui a página é o buraco branco
+    // e, depois, a nebulosa. Tudo o que é "parar no lugar" lê esta flag.
+    const inEpilogue = emit.gather > 0;
 
     // ---- o rebosininho ----
     // A bola preta só existe no prólogo: fora dele o gatilho é desarmado, senão
@@ -689,15 +917,17 @@ export function buildJourney(palette: ChalkPalette, params: SceneParams): Journe
     }
 
     // No buraco negro a câmera desce até quase o plano do disco (a referência
-    // é quase de perfil) e abre o campo de visão: a sensação de queda.
+    // é quase de perfil) e abre o campo de visão: a sensação de queda. No
+    // epílogo ela desce um pouco e abre mais no estouro — o buraco branco é
+    // grande, e o quadro tem de caber nele.
     //
     // **A coreografia é a mesma em qualquer tela.** Não há caminho alternativo
     // para o retrato: o mergulho, o close no buraco, o clarão, o rebosininho e a
     // revelação acontecem iguais para todo mundo. O único número que se adapta
     // é a *base* do campo de visão (72° no estreito, para o corredor caber); o
     // acréscimo é o mesmo, com um teto que impede a soma de passar de 78°.
-    const flightY = lerp(CAMERA_HEIGHT, 3.5, phase.approach);
-    const targetFov = Math.min(baseFov + phase.approach * 16, MAX_FOV);
+    const flightY = lerp(lerp(CAMERA_HEIGHT, 3.5, phase.approach), 6, emit.gather);
+    const targetFov = Math.min(baseFov + phase.approach * 16 + emit.burst * 12, MAX_FOV);
     if (Math.abs(camera.fov - targetFov) > 0.01) {
       camera.fov = damp(camera.fov, targetFov, 3, dt);
       camera.updateProjectionMatrix();
@@ -708,16 +938,33 @@ export function buildJourney(palette: ChalkPalette, params: SceneParams): Journe
     // câmera está a 3,5 unidades do plano do disco, e ±2,5 de paralaxe a leva de
     // dentro da poeira para o vazio — o enquadramento autoral viraria refém do
     // mouse. No corredor o paralaxe volta inteiro.
-    const parallax = 1 - phase.approach;
+    //
+    // E vale o mesmo para a **nebulosa**: lá o mouse não tem nada para arrastar, e
+    // puxar a câmera de lado a 62 unidades (4,6° de ângulo) tirava o olho do
+    // centro do quadro. Com a câmera travada em x e y o enquadramento fica
+    // autoral: o que se move ali é o gás, não o ponto de vista.
+    const parallax = 1 - Math.max(phase.approach, inEpilogue ? 1 : 0);
     const lateralPointer = (aspect < 1 ? 4 : 5) * parallax;
     camera.position.x = damp(camera.position.x, pointer.x * lateralPointer, 2.4, dt);
     camera.position.y = damp(camera.position.y, flightY - pointer.y * 2.5 * parallax, 2.4, dt);
     // o rebobininho soma um recuo ao alvo: a câmera volta, mostra o buraco, e
     // desce de novo — o scroll continua mandando, ele só cede um instante
+    // No epílogo a perseguição **vira**: em vez de seguir o scroll, a câmera vai
+    // direto para a parada do buraco branco e **fica** lá.
+    //
+    // Antes era `Math.max(targetZ, parada)`, que só segurava a câmera quando o
+    // scroll já tinha passado do ponto — e como o epílogo começa em 0,76 (com a
+    // câmera ainda em -1804), o branco do buraco baixava com ela a ~490 unidades
+    // da nebulosa: o usuário tinha de rolar para chegar perto. Indo direto, ela
+    // já está parada de frente para a nebulosa no instante em que ela acende, e o
+    // resto do scroll só traz o card de contato por cima.
+    const chase = inEpilogue ? WHITE_HOLE_Z + WHITE_HOLE_STOP : targetZ;
     camera.position.z = damp(
       camera.position.z,
-      targetZ + rewindAmount * REWIND_DISTANCE,
-      6.5,
+      chase + rewindAmount * REWIND_DISTANCE,
+      // a chegada é mais rápida que a perseguição normal: é uma chegada, não um
+      // acompanhamento
+      inEpilogue ? 9 : 6.5,
       dt,
     );
 
@@ -729,6 +976,20 @@ export function buildJourney(palette: ChalkPalette, params: SceneParams): Journe
     if (aim > 0.001) {
       holeTarget.copy(holeCenter);
       lookTarget.lerp(holeTarget, aim);
+    }
+    // No epílogo o mesmo gesto aponta para o buraco branco, e volta ao corredor
+    // quando o branco do estouro cobre a virada.
+    if (emit.aim > 0.001) {
+      whiteTarget.set(0, 0, WHITE_HOLE_Z);
+      lookTarget.lerp(whiteTarget, emit.aim);
+    }
+    // No afterglow a nebulosa já está **no mesmo ponto** do buraco branco — ela
+    // não se move um milímetro. O que sobe é o **olhar**: a faixa de contato
+    // ocupa o rodapé, e sem esta inclinação o olho ficaria atrás dela. Mirar
+    // abaixo (e não levantar a peça) é o que mantém as duas no mesmo lugar.
+    if (emit.afterglow > 0.001) {
+      whiteTarget.set(0, EPILOGUE_AIM_Y, WHITE_HOLE_Z);
+      lookTarget.lerp(whiteTarget, emit.afterglow);
     }
     camera.lookAt(lookTarget);
 
@@ -773,9 +1034,12 @@ export function buildJourney(palette: ChalkPalette, params: SceneParams): Journe
 
     // a poeira do corredor "acende" junto com a revelação: o universo de dados
     // não estava lá antes, ele se condensa na queda do clarão. O piso é o que
-    // fica visível no prólogo — é a poeira que o buraco puxa.
+    // fica visível no prólogo — é a poeira que o buraco puxa. No epílogo ela
+    // brilha de novo, agora para convergir no buraco branco.
     const dustMaterial = dust.material as THREE.PointsMaterial;
-    dustMaterial.opacity = (dark ? 0.55 : 0.4) * (0.3 + 0.7 * clamp(phase.reveal * 1.5, 0, 1));
+    const glow = 0.3 + 0.7 * clamp(phase.reveal * 1.5, 0, 1);
+    dustMaterial.opacity = 0.55 * glow * (1 + emit.gather * 0.7);
+    dustMaterial.color.lerpColors(dustCold, dustHot, emit.gather * 0.7);
 
     // o buraco negro só anima enquanto a câmera está perto dele
     if (Math.abs(camera.position.z - HOLE_Z) < 900) {
@@ -786,13 +1050,26 @@ export function buildJourney(palette: ChalkPalette, params: SceneParams): Journe
       );
     }
 
+    // o buraco branco é o espelho: só existe no fim do corredor, e a câmera só
+    // chega perto no epílogo — antes disso o disco dele está lá, apagado
+    if (camera.position.z > WHITE_HOLE_Z - 900) {
+      white.update(
+        { t: time, dt: motion, playing, pointer: pointerRef, params: getSceneParams(), focus: 1 },
+        emit,
+        camera,
+      );
+    }
+
     // foco: 1 quando a câmera está no ponto de observação daquela peça.
     // Só animamos o que está perto — o resto congela (economia de CPU).
     for (const part of parts) {
       const focusDistance = Math.abs(camera.position.z - part.viewZ);
       const focus = clamp(1 - focusDistance / 240, 0, 1);
       if (Math.abs(camera.position.z - (part.viewZ - EXHIBIT_LEAD)) > 700) continue;
-      part.update(time, motion, focus, phase.reveal);
+      // A nebulosa acende **mais rápido** que o `afterglow`: o pedido é que ela
+      // já esteja gigante quando o branco baixa, sem o usuário ter de rolar mais.
+      // O `×2,2` gasta só ~8% da perna (uns 4vh de scroll) para ir de 0 a 1.
+      part.update(time, motion, focus, phase.reveal, clamp(emit.afterglow * 2.2, 0, 1));
     }
 
     scene.updateMatrixWorld();
@@ -825,12 +1102,14 @@ export function buildJourney(palette: ChalkPalette, params: SceneParams): Journe
       themes.forEach((theme) => theme.exhibit.dispose());
       disposeObject(entrance.group);
       hole.dispose();
+      white.dispose();
+      nebula.dispose();
       ctx.plates.forEach((plate) => plate.dispose());
       background.dispose();
       dustGeometry.dispose();
       (dust.material as THREE.Material).dispose();
       scene.clear();
-      camera.remove(hole.flare, hole.void);
+      camera.remove(hole.flare, hole.void, white.flash);
     },
   };
 }
