@@ -27,15 +27,18 @@ import { ProbabilityLab } from '../labs/ProbabilityLab';
 import { InferenceLab } from '../labs/InferenceLab';
 import { Results } from './Results';
 import { FormulaSheet } from './FormulaSheet';
-import { Footer } from './Footer';
-import { CHALK_DARK, CHALK_LIGHT } from '../../lib/scene/chalk';
+import { Contact } from './Contact';
+import { CHALK } from '../../lib/scene/chalk';
 import {
+  EPILOGUE_START,
   JOURNEY_CHAPTERS,
   buildJourney,
   cardPose,
   chapterAnchor,
   chapterIndexAt,
   depthAt,
+  epilogueOpacity,
+  JOURNEY_PRESENTED_AT,
   prologueOpacity,
   type Journey,
 } from '../../lib/scene/journey';
@@ -55,7 +58,7 @@ const CARD_CONTENT: ReactNode[] = [
   <InferenceLab key="inferencia" />,
   <Results key="resultados" />,
   <FormulaSheet key="formulario" />,
-  <Footer key="contato" />,
+  <Contact key="contato" />,
 ];
 
 function prefersReducedMotion(): boolean {
@@ -71,6 +74,7 @@ export function Journey3D() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cardRefs = useRef<Array<HTMLElement | null>>([]);
   const prologueRef = useRef<HTMLDivElement>(null);
+  const epilogueRef = useRef<HTMLDivElement>(null);
 
   const journeyRef = useRef<Journey | null>(null);
   const viewerRef = useRef<Viewer | null>(null);
@@ -79,36 +83,25 @@ export function Journey3D() {
   const metricsRef = useRef({ top: 0, track: 1 });
   const pointerRef = useRef({ x: 0, y: 0 });
 
-  const [dark, setDark] = useState(
-    () => typeof document !== 'undefined' && document.documentElement.classList.contains('dark'),
-  );
   const [supported, setSupported] = useState(true);
   const [active, setActive] = useState(0);
   const [atTop, setAtTop] = useState(true);
-  // enquanto o prólogo domina o quadro, o canvas se descreve como prólogo:
-  // muda uma única vez no percurso, então não custa re-render
-  const [inPrologue, setInPrologue] = useState(true);
+  // em que parte da viagem o quadro está: muda **uma vez por trecho**, então não
+  // custa re-render (e é o que o canvas descreve para o leitor de tela)
+  const [fase, setFase] = useState<'prologo' | 'corredor' | 'epilogo'>('prologo');
 
   const reduced = prefersReducedMotion();
 
-  // ---------- tema (o canvas e as luzes seguem claro/escuro) ----------
-  useEffect(() => {
-    const root = document.documentElement;
-    const observer = new MutationObserver(() => setDark(root.classList.contains('dark')));
-    observer.observe(root, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, []);
-
-  // ---------- montagem da cena (e remontagem na troca de tema) ----------
+  // ---------- montagem da cena ----------
   useEffect(() => {
     const canvas = canvasRef.current;
     const section = sectionRef.current;
     if (!canvas || !section) return;
 
-    const journey = buildJourney(dark ? CHALK_DARK : CHALK_LIGHT, getSceneParams());
+    const journey = buildJourney(CHALK, getSceneParams());
     // reduced-motion: sem animação autônoma (o scroll continua movendo a câmera)
     journey.setPlaying(!reduced);
-    const viewer = createViewer(canvas, journey.camera, journey.scene, { dark });
+    const viewer = createViewer(canvas, journey.camera, journey.scene);
     journeyRef.current = journey;
     viewerRef.current = viewer;
     setSupported(hasWebGL());
@@ -149,7 +142,7 @@ export function Journey3D() {
       journeyRef.current = null;
       viewerRef.current = null;
     };
-  }, [dark, reduced]);
+  }, [reduced]);
 
   // ---------- paralaxe: o ponteiro inclina a câmera ----------
   useEffect(() => {
@@ -190,7 +183,13 @@ export function Journey3D() {
       const dt = Math.min(0.05, deltaMs / 1000);
       const { top, track } = metricsRef.current;
       const scroll = window.scrollY;
-      const raw = clamp((scroll - top) / track, 0, 1);
+      // A rolagem vai de 0 a `JOURNEY_PRESENTED_AT`, e não de 0 a 1. O progresso
+      // da linha do tempo é comprimido nessa faixa porque é ela que tem
+      // conteúdo: o resto do scroll — de `JOURNEY_PRESENTED_AT` até 1 — são 72vh
+      // em que a câmera está travada, a nebulosa já acendeu e o card não se mexe.
+      // Sem esta multiplicação, dava para arrastar a barra até o fim sem que
+      // nada acontecesse.
+      const raw = clamp((scroll - top) / track, 0, 1) * JOURNEY_PRESENTED_AT;
 
       // em reduced-motion não há inércia: o scroll manda direto
       progressRef.current = reduced
@@ -204,6 +203,13 @@ export function Journey3D() {
       const prologueEl = prologueRef.current;
       if (prologueEl) {
         prologueEl.style.opacity = String(Number(prologueOpacity(progress).toFixed(3)));
+      }
+
+      // placa do epílogo: entra com a convergência do buraco branco e sai com
+      // o estouro (o branco fecha a página)
+      const epilogueEl = epilogueRef.current;
+      if (epilogueEl) {
+        epilogueEl.style.opacity = String(Number(epilogueOpacity(progress).toFixed(3)));
       }
 
       for (let index = 0; index < JOURNEY_CHAPTERS.length; index += 1) {
@@ -234,8 +240,13 @@ export function Journey3D() {
 
       const next = chapterIndexAt(progress);
       setActive((current) => (current === next ? current : next));
-      const inThePrologue = progress < JOURNEY_CHAPTERS[0].enter;
-      setInPrologue((current) => (current === inThePrologue ? current : inThePrologue));
+      const onde: 'prologo' | 'corredor' | 'epilogo' =
+        progress < JOURNEY_CHAPTERS[0].enter
+          ? 'prologo'
+          : progress >= EPILOGUE_START
+            ? 'epilogo'
+            : 'corredor';
+      setFase((current) => (current === onde ? current : onde));
       setAtTop((current) => (current === (scroll < 40) ? current : scroll < 40));
     },
     { fps: reduced ? REDUCED_FPS : MAX_FPS },
@@ -308,11 +319,13 @@ export function Journey3D() {
           className="journey__canvas"
           role="img"
           aria-label={
-            inPrologue
+            fase === 'prologo'
               ? 'Prólogo 3D: um disco de acreção gira em torno de um buraco negro; a câmera se aproxima do horizonte de eventos.'
-              : `Cena 3D da jornada, ${active + 1} de ${JOURNEY_CHAPTERS.length}: ${
-                  JOURNEY_CHAPTERS[active]?.title ?? 'Visão Geral'
-                }`
+              : fase === 'epilogo'
+                ? 'Epílogo 3D: a poeira do corredor converge para um buraco branco, que se abre e devolve tudo em forma de luz.'
+                : `Cena 3D da jornada, ${active + 1} de ${JOURNEY_CHAPTERS.length}: ${
+                    JOURNEY_CHAPTERS[active]?.title ?? 'Visão Geral'
+                  }`
           }
         />
 
@@ -322,6 +335,17 @@ export function Journey3D() {
           <h2 className="journey__prologue-title">Do outro lado do horizonte</h2>
           <p className="journey__prologue-note">
             A população é o buraco: só vemos a luz que escapa, e ela chega enviesada.
+          </p>
+        </div>
+
+        {/* placa do epílogo: o buraco branco fecha a viagem com a mesma frase
+            que o prólogo abriu — a mesma conta, ao contrário */}
+        <div ref={epilogueRef} className="journey__prologue journey__epilogue" aria-hidden="true">
+          <p className="journey__prologue-eyebrow">EPÍLOGO · A MESMA CONTA AO CONTRÁRIO</p>
+          <h2 className="journey__prologue-title">O buraco branco</h2>
+          <p className="journey__prologue-note">
+            O buraco negro era o que só vemos da população. O buraco branco é a estimativa: o que se
+            reconstrói do que não escapou.
           </p>
         </div>
 
