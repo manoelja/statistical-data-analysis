@@ -32,6 +32,14 @@ export const SHADOW_RADIUS = 9;
 export const DISK_INNER = 10;
 export const DISK_OUTER = 42;
 
+/**
+ * Inclinação do disco. Tudo que é **plano** no buraco usa este valor: disco,
+ * poeira capturada e anel de fótons. Sem compartilhar o ângulo, o anel (que nasce
+ * no plano XY) aparece torto em relação ao disco, e a "borda acesa" deixa de
+ * estar colada na sombra.
+ */
+export const DISK_TILT = -0.42;
+
 const DISK_COUNT = 3200;
 const STAR_COUNT = 760;
 
@@ -395,9 +403,9 @@ function createFlare(): THREE.Mesh {
 }
 
 /**
- * O vazio do prólogo: um fundo preto preso à câmera. Sem ele, no tema claro o
- * buraco negro desdobrado sobre papel e o clarão branco — que é *aditivo* —
- * simplesmente desapareceria. Ele também faz a travessia acontecer no escuro
+ * O vazio do prólogo: um fundo preto preso à câmera. Sem ele, o buraco negro
+ * desdobrado sobre o gradiente do corredor e o clarão branco — que é *aditivo* —
+ * simplesmente desapareceriam. Ele também faz a travessia acontecer no escuro
  * de verdade, e some junto com a revelação.
  *
  * `voidStrength` deixa o `journey` baixar a cobertura no retrato, onde o vazio
@@ -456,6 +464,9 @@ export function createBlackHole(ctx: BuildContext): BlackHole {
     }),
   );
   ring.userData.letCameraPass = true;
+  // o anel é a borda interna do disco: nasce no mesmo plano que ele (XY) e
+  // recebe a **mesma** inclinação, senão lê como um aro torto atrás da sombra
+  ring.rotation.x = DISK_TILT;
   group.add(ring);
 
   // ---- halo aditivo: REMOVIDO ----
@@ -467,13 +478,13 @@ export function createBlackHole(ctx: BuildContext): BlackHole {
   // ---- disco de acreção + estrelas/poeira capturada ----
   const { points: disk, uniforms } = createDisk(ctx);
   // leve inclinação: vemos o disco um pouco de cima, como na referência
-  disk.rotation.x = -0.42;
+  disk.rotation.x = DISK_TILT;
   group.add(disk);
 
   const { points: stars, uniforms: starUniforms } = createStarfield(ctx);
   // a poeira cai no mesmo plano inclinado do disco, senão as duas espirais
   // discordariam do ponto de vista
-  stars.rotation.x = -0.42;
+  stars.rotation.x = DISK_TILT;
   group.add(stars);
 
   const flare = createFlare();

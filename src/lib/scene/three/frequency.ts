@@ -101,17 +101,19 @@ export function createFrequencyExhibit(ctx: BuildContext): Exhibit {
 
   // ---- rótulos ----
   const label = (text: string, color: string, height = 0.34) => {
-    const { sprite, plate } = createChalkSprite([{ text, size: 52, color }], { worldHeight: height });
-    ctx.plates.push(plate);
-    group.add(sprite);
-    return sprite;
+    const made = createChalkSprite([{ text, size: 52, color }], { worldHeight: height });
+    ctx.plates.push(made.plate);
+    group.add(made.sprite);
+    return made;
   };
-  const rowLabels = Array.from({ length: ROWS }, (_, row) =>
-    label(String(row + 1), palette.cyan).translateX(-halfWidth - STEP * 0.95).translateY(0.28).translateZ(zOf(row)),
-  );
-  label('amostras', palette.chalk, 0.3).translateZ(halfDepth + STEP * 0.85);
+  const rowLabels = Array.from({ length: ROWS }, (_, row) => {
+    const made = label(String(row + 1), palette.cyan);
+    made.sprite.translateX(-halfWidth - STEP * 0.95).translateY(0.28).translateZ(zOf(row));
+    return made;
+  });
+  label('amostras', palette.chalk, 0.3).sprite.translateZ(halfDepth + STEP * 0.85);
   label('valores x_{i}', palette.yellow, 0.3)
-    .translateX(-halfWidth - STEP * 1.5)
+    .sprite.translateX(-halfWidth - STEP * 1.5)
     .translateY(0.9)
     .translateZ(halfDepth + STEP * 0.85);
 
@@ -175,9 +177,12 @@ export function createFrequencyExhibit(ctx: BuildContext): Exhibit {
       cell.material.opacity = 0.78 + 0.12 * frame.focus;
     }
 
-    rowLabels.forEach((sprite, row) => {
+    rowLabels.forEach(({ sprite, plate }, row) => {
       const target = row === activeRow ? 0.42 : 0.3;
-      sprite.scale.setScalar(clamp(sprite.scale.x + (target - sprite.scale.x) * 0.12, 0.2, 0.6));
+      // a escala é **proporcional**: um dígito é bem mais alto que largo, e
+      // `setScalar` esticava o número para um quadrado
+      const next = clamp(sprite.scale.y + (target - sprite.scale.y) * 0.12, 0.2, 0.6);
+      sprite.scale.set(next * plate.aspect, next, 1);
     });
 
     formulas.forEach((f) => f.update(frame.t));

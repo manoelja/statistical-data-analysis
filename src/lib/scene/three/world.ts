@@ -18,11 +18,6 @@ import { createHistogramExhibit } from './histogram';
 import { createScatterExhibit } from './scatter';
 import { clamp, damp, lerp } from './math';
 import { chalkSegments, disposeObject } from './shared';
-/** luminância perceptual do hex — decide se o tema é claro ou escuro */
-function isDarkPalette(hex: string): boolean {
-  const color = new THREE.Color(hex);
-  return 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b < 0.25;
-}
 import { createVennExhibit } from './venn';
 import type { BuildContext, Exhibit, Frame, Readout } from './types';
 
@@ -79,22 +74,13 @@ interface Slot {
 
 export function buildWorld(palette: ChalkPalette, params: SceneParams): World {
   const scene = new THREE.Scene();
-  const dark = isDarkPalette(palette.board1);
 
-  // ---- fundo: gradiente (preto → azul-marinho no escuro, papel no claro) ----
-  const background = createGradientTexture(
-    dark
-      ? [
-          [0, '#04060b'],
-          [0.45, '#0b1426'],
-          [1, '#05070d'],
-        ]
-      : [
-          [0, '#fdfbf6'],
-          [0.6, '#f3eee2'],
-          [1, '#e6dfcd'],
-        ],
-  );
+  // ---- fundo: gradiente preto → azul-marinho da ardósia ----
+  const background = createGradientTexture([
+    [0, '#04060b'],
+    [0.45, '#0b1426'],
+    [1, '#05070d'],
+  ]);
   scene.background = background;
   scene.fog = new THREE.Fog(new THREE.Color(palette.board1), 16, 44);
 
@@ -102,9 +88,9 @@ export function buildWorld(palette: ChalkPalette, params: SceneParams): World {
   camera.position.set(0, 2.6, 10.6);
 
   // ---- luzes (ambiente + direcional com sombra + dois holofotes coloridos) ----
-  scene.add(new THREE.AmbientLight(palette.chalk, dark ? 0.5 : 0.85));
+  scene.add(new THREE.AmbientLight(palette.chalk, 0.5));
 
-  const key = new THREE.DirectionalLight(palette.chalk, dark ? 1.5 : 1.1);
+  const key = new THREE.DirectionalLight(palette.chalk, 1.5);
   key.position.set(6, 11, 8);
   key.castShadow = true;
   key.shadow.mapSize.set(1024, 1024);
@@ -118,8 +104,8 @@ export function buildWorld(palette: ChalkPalette, params: SceneParams): World {
   key.shadow.normalBias = 0.02;
   scene.add(key, key.target);
 
-  const rimCyan = new THREE.PointLight(palette.cyan, dark ? 60 : 30, 34, 2);
-  const rimPink = new THREE.PointLight(palette.pink, dark ? 55 : 26, 34, 2);
+  const rimCyan = new THREE.PointLight(palette.cyan, 60, 34, 2);
+  const rimPink = new THREE.PointLight(palette.pink, 55, 34, 2);
   rimCyan.position.set(-4.5, 3.4, 5.5);
   rimPink.position.set(4.5, 4.2, 5);
   scene.add(rimCyan, rimPink);
@@ -143,7 +129,7 @@ export function buildWorld(palette: ChalkPalette, params: SceneParams): World {
 
   const shadowFloor = new THREE.Mesh(
     new THREE.PlaneGeometry(120, 120),
-    new THREE.ShadowMaterial({ opacity: dark ? 0.42 : 0.22 }),
+    new THREE.ShadowMaterial({ opacity: 0.42 }),
   );
   shadowFloor.rotation.x = -Math.PI / 2;
   shadowFloor.position.y = 0.001;
@@ -168,7 +154,7 @@ export function buildWorld(palette: ChalkPalette, params: SceneParams): World {
       color: palette.chalk,
       size: 0.07,
       transparent: true,
-      opacity: dark ? 0.5 : 0.32,
+      opacity: 0.5,
       depthWrite: false,
     }),
   );

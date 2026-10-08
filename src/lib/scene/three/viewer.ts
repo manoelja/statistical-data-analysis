@@ -23,10 +23,8 @@ export interface Viewer {
   dispose(): void;
 }
 
-export interface ViewerOptions {
-  /** tema escuro pede mais brilho de giz */
-  dark: boolean;
-}
+/** Brilho de giz: a cena é escura, então o bloom pode ser generoso. */
+const BLOOM_STRENGTH = 0.52;
 
 /**
  * Devolve `null` quando não há WebGL (jsdom, navegador antigo, GPU bloqueada) —
@@ -46,7 +44,6 @@ export function createViewer(
   canvas: HTMLCanvasElement,
   camera: THREE.Camera,
   scene: THREE.Scene,
-  options: ViewerOptions,
 ): Viewer | null {
   if (!hasWebGL()) return null;
 
@@ -70,12 +67,7 @@ export function createViewer(
 
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(
-    new THREE.Vector2(1, 1),
-    options.dark ? 0.52 : 0.28,
-    0.75,
-    0.68,
-  );
+  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), BLOOM_STRENGTH, 0.75, 0.68);
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
 
@@ -102,9 +94,9 @@ export function createViewer(
     },
     setSize,
     dispose() {
-      // Nada de `forceContextLoss`: a troca de tema remonta a cena no **mesmo**
-      // canvas, e um contexto perdido faria o novo renderizador nascer morto
-      // ("Cannot read properties of null (reading 'precision')").
+      // Nada de `forceContextLoss`: a cena é remontada no **mesmo** canvas
+      // (reduced-motion, redimensionamento), e um contexto perdido faria o novo
+      // renderizador nascer morto ("Cannot read properties of null").
       composer.dispose?.();
       renderer.dispose();
     },

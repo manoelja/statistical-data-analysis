@@ -1,14 +1,29 @@
 import { describe, expect, it } from 'vitest';
-import { CHALK_DARK, CHALK_LIGHT } from './chalk';
+import { CHALK } from './chalk';
 import { drift, noise1 } from './noise';
 import { easeOutCubic, lerp, projectBlur, projectScale } from './projection';
 
 describe('scene/chalk', () => {
-  it('tem as duas variantes com as mesmas chaves e cores hex válidas', () => {
-    expect(Object.keys(CHALK_DARK).sort()).toEqual(Object.keys(CHALK_LIGHT).sort());
-    for (const value of [...Object.values(CHALK_DARK), ...Object.values(CHALK_LIGHT)]) {
+  it('é uma paleta só, com todas as cores hex válidas', () => {
+    const keys = Object.keys(CHALK);
+    expect(keys).toEqual([
+      'chalk',
+      'cyan',
+      'yellow',
+      'pink',
+      'orange',
+      'green',
+      'blue',
+      'red',
+      'board0',
+      'board1',
+      'bulb',
+    ]);
+    for (const value of Object.values(CHALK)) {
       expect(value).toMatch(/^#[0-9a-f]{6}$/i);
     }
+    // a ardósia é escura: é o fundo da cena e do quadro
+    expect(CHALK.board1).toBe('#121516');
   });
 });
 

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { CHALK_DARK, CHALK_LIGHT } from '../chalk';
+import { CHALK } from '../chalk';
 import { DEFAULT_SCENE_PARAMS, resetSceneParams, setSceneParams } from '../store';
 import { buildWorld, SPACING } from './world';
 import type { World } from './world';
@@ -18,7 +18,7 @@ import type { World } from './world';
 const created: World[] = [];
 
 function makeWorld(): World {
-  const world = buildWorld(CHALK_DARK, { ...DEFAULT_SCENE_PARAMS });
+  const world = buildWorld(CHALK, { ...DEFAULT_SCENE_PARAMS });
   created.push(world);
   world.setAspect(1.6);
   return world;
@@ -315,13 +315,15 @@ describe('three/world — interação por raio', () => {
   });
 });
 
-describe('three/world — tema', () => {
-  it('monta com a paleta clara sem depender da escura', () => {
-    const world = buildWorld(CHALK_LIGHT, { ...DEFAULT_SCENE_PARAMS });
+describe('three/world — a ardósia', () => {
+  it('monta o corredor escuro, com a névoa na cor da ardósia', () => {
+    const world = buildWorld(CHALK, { ...DEFAULT_SCENE_PARAMS });
     created.push(world);
     run(world, 3);
     expect(world.info.length).toBe(6);
     expect(world.describe().title).toBe('Cubo de fórmulas');
-    expect(world.scene.fog).toBeInstanceOf(THREE.Fog);
+    const fog = world.scene.fog as THREE.Fog;
+    expect(fog).toBeInstanceOf(THREE.Fog);
+    expect(fog.color.getHexString()).toBe(new THREE.Color(CHALK.board1).getHexString());
   });
 });
