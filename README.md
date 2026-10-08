@@ -30,7 +30,8 @@ aparece do outro lado do corredor.
 | 3 | Parte 2 — Inferência (média, proporção) | histograma + curva normal |
 | 4 | Resultados — o IC cobriu o parâmetro? | nuvem de dispersão |
 | 5 | Formulário — a "cola" | cubo de fórmulas |
-| 6 | Contato — origem dos dados | diagrama de Venn |
+| 6 | epílogo: o buraco branco | disco de ejeção + núcleo + casca de choque |
+| 7 | Contato — os quatro botões de saída | **nebulosa** (o olho) |
 
 Dentro de cada laboratório a **trilha de estudo** funciona como abas: uma questão por vez, com
 sliders de resultado ao vivo e um botão "ver resolução passo a passo".
