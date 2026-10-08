@@ -1,7 +1,8 @@
-import { act, render, waitFor } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import '../../styles/global.css';
 import { DataScienceBackdrop } from './DataScienceBackdrop';
+import { CHALK } from '../../lib/scene/chalk';
 import { resetSceneParams, setSceneParams } from '../../lib/scene/store';
 
 describe('DataScienceBackdrop', () => {
@@ -26,19 +27,13 @@ describe('DataScienceBackdrop', () => {
     expect(container.querySelector('rect[fill="url(#glowBoard)"]')).not.toBeNull();
   });
 
-  it('troca a paleta quando o tema muda para escuro', async () => {
+  it('a ardósia é a escura — a paleta do quadro é única', () => {
     const { container } = render(<DataScienceBackdrop />);
-    const firstStop = () => container.querySelector('#glowBoard stop')?.getAttribute('stop-color');
-    const claro = firstStop();
+    const stops = [...container.querySelectorAll('#glowBoard stop')].map((stop) =>
+      stop.getAttribute('stop-color'),
+    );
 
-    await act(async () => {
-      document.documentElement.classList.add('dark');
-    });
-    await waitFor(() => expect(firstStop()).not.toBe(claro));
-
-    await act(async () => {
-      document.documentElement.classList.remove('dark');
-    });
+    expect(stops).toEqual([CHALK.board0, CHALK.board1]);
   });
 
   it('espelha os parâmetros do laboratório (μ/σ) no quadro', async () => {

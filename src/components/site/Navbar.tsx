@@ -8,7 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Menu, Moon, Sun, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { useActiveSection } from '../../hooks/useActiveSection';
 import { useScrollProgress } from '../../hooks/useScrollProgress';
 
@@ -24,7 +24,6 @@ const LINKS = [
 const SECTION_IDS = LINKS.map(l => l.id);
 
 export function Navbar() {
-  const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'));
   const [stuck, setStuck] = useState(false);
   const [open, setOpen] = useState(false);
   const active = useActiveSection(SECTION_IDS);
@@ -36,11 +35,6 @@ export function Navbar() {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', dark);
-    try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch { /* ignore */ }
-  }, [dark]);
 
   const goTo = (id: string) => {
     setOpen(false);
@@ -101,18 +95,6 @@ export function Navbar() {
               </motion.a>
             ))}
           </nav>
-
-          {/* Toggle tema */}
-          <motion.button
-            className="icon-btn"
-            onClick={() => setDark(!dark)}
-            aria-label={dark ? 'Ativar tema claro' : 'Ativar tema escuro'}
-            whileHover={{ rotateY: 20, scale: 1.1 }}
-            whileTap={{ scale: 0.9, rotateZ: -15 }}
-            style={{ transformStyle: 'preserve-3d', perspective: '200px' }}
-          >
-            {dark ? <Sun size={18} /> : <Moon size={18} />}
-          </motion.button>
 
           {/* Toggle menu mobile */}
           <motion.button

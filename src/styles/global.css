@@ -1,45 +1,9 @@
 /* ============================================================
    Probabilidade & InferÃªncia EstatÃ­stica â€” tema "caderno cientÃ­fico"
-   Claro por padrÃ£o, escuro opcional (classe .dark no <html>).
+   Tema escuro Ãºnico: a pÃ¡gina Ã© o espaÃ§o da jornada (ardÃ³sia + giz aceso).
    ============================================================ */
 
 :root {
-  --paper: #f7f4ee;
-  --paper-raised: #fffdf9;
-  --ink: #191713;
-  --ink-soft: #57534a;
-  --ink-faint: #8a8375;
-  --rule: rgba(25, 23, 19, 0.14);
-  --rule-strong: rgba(25, 23, 19, 0.28);
-
-  --accent: #4338ca;
-  --accent-soft: rgba(67, 56, 202, 0.1);
-  --accent-deep: #312e81;
-  --gold: #b45309;
-  --gold-soft: rgba(180, 83, 9, 0.12);
-  --teal: #0f766e;
-  --rose: #be123c;
-
-  --shadow-sm: 1px 1px 0 rgba(25, 23, 19, 0.9);
-  --shadow-card: 4px 4px 0 rgba(25, 23, 19, 0.14);
-  --shadow-lift: 6px 6px 0 rgba(67, 56, 202, 0.28);
-
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --radius-pill: 999px;
-
-  /* Letras estilo giz (mesma fonte das fÃ³rmulas do quadro de fundo). */
-  --font-chalk: 'Patrick Hand', 'Segoe Print', 'Comic Sans MS', cursive;
-  --font-display: var(--font-chalk);
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
-
-  --nav-h: 68px;
-  --ease: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-html.dark {
   --paper: #14131a;
   --paper-raised: #1c1b24;
   --ink: #f4f1ea;
@@ -59,6 +23,20 @@ html.dark {
   --shadow-sm: 1px 1px 0 rgba(0, 0, 0, 0.6);
   --shadow-card: 4px 4px 0 rgba(0, 0, 0, 0.35);
   --shadow-lift: 6px 6px 0 rgba(165, 180, 252, 0.24);
+
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+
+  /* Letras estilo giz (mesma fonte das fÃ³rmulas do quadro de fundo). */
+  --font-chalk: 'Patrick Hand', 'Segoe Print', 'Comic Sans MS', cursive;
+  --font-display: var(--font-chalk);
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  --nav-h: 68px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 * {
@@ -81,18 +59,9 @@ body {
   font-family: var(--font-body);
   color: var(--ink);
   background-color: var(--paper);
-  background-image:
-    radial-gradient(circle at 15% 10%, rgba(67, 56, 202, 0.06), transparent 45%),
-    radial-gradient(circle at 85% 0%, rgba(180, 83, 9, 0.07), transparent 40%);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   overflow-x: clip;
-}
-
-html.dark body {
-  background-image:
-    radial-gradient(circle at 15% 10%, rgba(165, 180, 252, 0.08), transparent 45%),
-    radial-gradient(circle at 85% 0%, rgba(251, 191, 36, 0.06), transparent 40%);
 }
 
 a {
@@ -197,12 +166,8 @@ ul {
 
 .btn--primary {
   background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
-}
-
-html.dark .btn--primary {
   color: #14131a;
+  border-color: var(--accent);
 }
 
 .btn--ghost {
@@ -555,12 +520,8 @@ html.dark .btn--primary {
 
 .rail button.active .rail__num {
   background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
-}
-
-html.dark .rail button.active .rail__num {
   color: #14131a;
+  border-color: var(--accent);
 }
 
 .questions {
@@ -1081,13 +1042,6 @@ input[type='range']::-moz-range-thumb {
 /* 1. Fundo com os gradientes do tema (grade removida a pedido) */
 body {
   background-image:
-    radial-gradient(circle at 15% 10%, rgba(67, 56, 202, 0.06), transparent 45%),
-    radial-gradient(circle at 85% 0%, rgba(180, 83, 9, 0.07), transparent 40%);
-  background-size: auto, auto;
-}
-
-html.dark body {
-  background-image:
     radial-gradient(circle at 15% 10%, rgba(165, 180, 252, 0.08), transparent 45%),
     radial-gradient(circle at 85% 0%, rgba(251, 191, 36, 0.06), transparent 40%);
   background-size: auto, auto;
@@ -1198,10 +1152,6 @@ html.dark body {
    Substitui o antigo fundo de doodles (aurora + giz + grÃ£o).
    ============================================================ */
 :root {
-  --board-opacity: 0.4;
-}
-
-html.dark {
   --board-opacity: 0.7;
 }
 
@@ -1288,16 +1238,11 @@ html.dark {
    controles ficam ao lado (desktop) ou na barra de baixo (mobile).
    ============================================================ */
 .ds3d {
-  --ds3d-live: var(--accent);
-  --ds3d-panel: color-mix(in srgb, var(--paper-raised) 84%, transparent);
+  --ds3d-live: var(--ds3d-cyan);
+  --ds3d-panel: color-mix(in srgb, #0b1120 78%, transparent);
   --ds3d-cyan: #27c4e0;
   --ds3d-yellow: #f7c531;
   --ds3d-pink: #ee3f7a;
-}
-
-html.dark .ds3d {
-  --ds3d-live: var(--ds3d-cyan);
-  --ds3d-panel: color-mix(in srgb, #0b1120 78%, transparent);
 }
 
 .ds3d__stage {
@@ -1314,12 +1259,8 @@ html.dark .ds3d {
   overflow: hidden;
   border: 1px solid var(--rule-strong);
   box-shadow: var(--shadow-card);
-  /* mesma famÃ­lia de fundo da cena (preto â†’ azul-marinho / papel) */
+  /* mesma famÃ­lia de fundo da cena (preto â†’ azul-marinho) */
   background: radial-gradient(125% 100% at 50% 0%, #121b30, #05070d);
-}
-
-html:not(.dark) .ds3d__viewport {
-  background: radial-gradient(125% 100% at 50% 0%, #fdfbf6, #e5ddca);
 }
 
 .ds3d__canvas {
@@ -1407,12 +1348,8 @@ html:not(.dark) .ds3d__viewport {
   padding: 1rem 1.1rem;
   border-radius: var(--radius-md);
   border: 1px solid var(--rule-strong);
-  background: color-mix(in srgb, var(--paper-raised) 94%, transparent);
-  box-shadow: var(--shadow-card);
-}
-
-html.dark .ds3d__explain {
   background: color-mix(in srgb, #0d1424 92%, transparent);
+  box-shadow: var(--shadow-card);
 }
 
 .ds3d__explain h3 {
@@ -1650,14 +1587,10 @@ html {
   content: '';
   position: absolute;
   inset: -2rem -1.5rem;
-  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--paper) 60%, transparent) 0%, transparent 70%);
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--paper) 55%, transparent) 0%, transparent 70%);
   border-radius: var(--radius-lg);
   pointer-events: none;
   z-index: -1;
-}
-
-html.dark .hero__text-wrap::before {
-  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--paper) 55%, transparent) 0%, transparent 70%);
 }
 
 /* ---- Stats card com efeito de profundidade ---- */
@@ -1902,84 +1835,6 @@ html.dark .hero__text-wrap::before {
   transition: left 0.6s var(--ease);
 }
 
-/* ============================================================
-   FOOTER COM CUBO 3D
-   ============================================================ */
-.footer--3d {
-  position: relative;
-  overflow: hidden;
-}
-
-.footer__grid--3d {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 2rem;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.footer__cube-wrap {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 1rem;
-}
-
-/* ---- Cubo CSS 3D ---- */
-.cube3d {
-  width: 64px;
-  height: 64px;
-  perspective: 300px;
-}
-
-.cube3d__inner {
-  position: relative;
-  width: 64px;
-  height: 64px;
-}
-
-.cube3d__face {
-  position: absolute;
-  width: 64px;
-  height: 64px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--ink);
-  background: color-mix(in srgb, var(--paper-raised) 85%, transparent);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--rule-strong);
-  backface-visibility: visible;
-}
-
-/* Posição de cada face */
-.cube3d__face--1 { transform: rotateY(  0deg) translateZ(32px); background: color-mix(in srgb, var(--accent) 18%, var(--paper-raised)); }
-.cube3d__face--2 { transform: rotateY( 90deg) translateZ(32px); background: color-mix(in srgb, var(--gold)   18%, var(--paper-raised)); }
-.cube3d__face--3 { transform: rotateY(180deg) translateZ(32px); background: color-mix(in srgb, var(--teal)   18%, var(--paper-raised)); }
-.cube3d__face--4 { transform: rotateY(270deg) translateZ(32px); background: color-mix(in srgb, var(--rose)   18%, var(--paper-raised)); }
-.cube3d__face--5 { transform: rotateX( 90deg) translateZ(32px); background: color-mix(in srgb, var(--accent) 12%, var(--paper-raised)); }
-.cube3d__face--6 { transform: rotateX(270deg) translateZ(32px); background: color-mix(in srgb, var(--gold)   12%, var(--paper-raised)); }
-
-/* ---- Ajuste do footer grid para mobile ---- */
-@media (max-width: 840px) {
-  .footer__grid--3d {
-    grid-template-columns: 1fr;
-    justify-items: start;
-  }
-
-  .footer__cube-wrap {
-    justify-self: center;
-    padding: 0.5rem;
-  }
-
-  .footer .footer__meta {
-    text-align: left;
-  }
-}
 
 /* ============================================================
    SEÇÕES — entradas perspectiva (section-head)
@@ -2094,8 +1949,7 @@ html.dark .hero__text-wrap::before {
 @media (prefers-reduced-motion: reduce) {
   .hero__particles { display: none; }
 
-  .flip-card__inner,
-  .cube3d__inner {
+  .flip-card__inner {
     animation: none !important;
     transition: none !important;
   }
@@ -2144,9 +1998,9 @@ html.dark .hero__text-wrap::before {
 }
 
 /* ============================================================
-   GLASSMORPHISM ESCURO — melhorar contraste dos cards 3D no dark mode
+   GLASSMORPHISM — melhorar contraste dos cards 3D sobre a ardósia
    ============================================================ */
-html.dark .stat--3d {
+.stat--3d {
   background: color-mix(in srgb, var(--paper-raised) 82%, transparent);
   border-color: color-mix(in srgb, var(--rule-strong) 70%, var(--accent) 30%);
   box-shadow:
@@ -2154,34 +2008,30 @@ html.dark .stat--3d {
     inset 0 1px 0 rgba(255,255,255,0.07);
 }
 
-html.dark .flip-card__face {
+.flip-card__face {
   background: color-mix(in srgb, var(--paper-raised) 90%, transparent);
 }
 
-html.dark .flip-card__face--back {
+.flip-card__face--back {
   background: linear-gradient(135deg,
     var(--paper-raised),
     color-mix(in srgb, var(--accent-soft) 60%, var(--paper-raised))
   );
 }
 
-html.dark .cube3d__face {
-  border-color: color-mix(in srgb, var(--rule-strong) 60%, var(--accent) 40%);
-}
-
-html.dark .panel--3d:hover {
+.panel--3d:hover {
   box-shadow:
     var(--shadow-lift),
     0 0 50px color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
-html.dark .formula--3d {
+.formula--3d {
   box-shadow:
     var(--shadow-card),
     inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
-html.dark .formula--3d:hover {
+.formula--3d:hover {
   box-shadow:
     var(--shadow-lift),
     0 0 30px color-mix(in srgb, var(--accent) 10%, transparent);

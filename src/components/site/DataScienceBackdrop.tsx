@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRafLoop } from '../../hooks/useRafLoop';
-import { CHALK_DARK, CHALK_LIGHT, type ChalkPalette } from '../../lib/scene/chalk';
+import { CHALK, type ChalkPalette } from '../../lib/scene/chalk';
 import { drift } from '../../lib/scene/noise';
 import { projectBlur, projectScale } from '../../lib/scene/projection';
 import { attachPointer, getPointer, stepPointer } from '../../lib/scene/pointer';
@@ -14,7 +14,7 @@ import { getSceneParams } from '../../lib/scene/store';
  * Melhorias em relação ao arquivo original:
  *  - remove barras de controle, dica e o título animado "Data Science";
  *  - sem interações (arrastar/clicar) — é pano de fundo, não peça interativa;
- *  - tema claro/escuro: a paleta troca junto com a classe `.dark` do <html>;
+ *  - uma paleta só: o quadro é giz aceso sobre ardósia, como a cena 3D;
  *  - sem o filtro `feTurbulence` (caro) — o grão fica no CSS, estático;
  *  - respeita `prefers-reduced-motion` (congela a animação, sem esconder o quadro).
  *
@@ -38,8 +38,7 @@ type AttrMap = Record<string, string | number>;
 
 /**
  * Constrói todas as cenas dentro de `svg` e devolve `advance(dt)`, que avança a
- * cena em um passo. Chamada a cada troca de tema; o loop de animação vive no
- * componente, via `useRafLoop`.
+ * cena em um passo. O loop de animação vive no componente, via `useRafLoop`.
  */
 function build(svg: SVGSVGElement, C: ChalkPalette): { advance: (dt: number) => void } {
   const sin = Math.sin;
@@ -1018,7 +1017,6 @@ function build(svg: SVGSVGElement, C: ChalkPalette): { advance: (dt: number) => 
 export function DataScienceBackdrop() {
   const svgRef = useRef<SVGSVGElement>(null);
   const sceneRef = useRef<{ advance: (dt: number) => void } | null>(null);
-  const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'));
   const prefersReducedMotion =
     typeof window !== 'undefined' &&
     typeof window.matchMedia === 'function' &&
@@ -1042,14 +1040,6 @@ export function DataScienceBackdrop() {
     const range = Math.max(1, vhRef.current * 0.9);
     return Math.min(1, Math.max(0.4, 1 - v / range));
   });
-
-  // Acompanha a troca de tema (classe `.dark` no <html>).
-  useEffect(() => {
-    const el = document.documentElement;
-    const obs = new MutationObserver(() => setDark(el.classList.contains('dark')));
-    obs.observe(el, { attributes: true, attributeFilter: ['class'] });
-    return () => obs.disconnect();
-  }, []);
 
   // Ponteiro: um único listener para a cena inteira (paralaxe de câmera).
   useEffect(() => {
@@ -1084,18 +1074,18 @@ export function DataScienceBackdrop() {
     { fps: 45, enabled: !prefersReducedMotion }
   );
 
-  // Constrói/reconstrói o quadro quando o tema muda.
+  // Constrói o quadro uma vez: a paleta é única, não há tema para acompanhar.
   useEffect(() => {
     const svg = svgRef.current;
     if (!svg) return;
     svg.replaceChildren();
-    const scene = build(svg, dark ? CHALK_DARK : CHALK_LIGHT);
+    const scene = build(svg, CHALK);
     sceneRef.current = scene;
     scene.advance(0); // pinta o primeiro quadro (mesmo com movimento desligado)
     return () => {
       sceneRef.current = null;
     };
-  }, [dark]);
+  }, []);
 
   return (
     <motion.div className="board-bg" aria-hidden="true" style={{ opacity }}>
