@@ -31,10 +31,26 @@ export const DEFAULT_SCENE_PARAMS: SceneParams = {
 };
 
 let params: SceneParams = { ...DEFAULT_SCENE_PARAMS };
+/**
+ * Cópia imutável para o React. O laço 3D usa `getSceneParams`, que devolve o
+ * objeto vivo (sem alocar por quadro); o React precisa de uma referência que
+ * **mude** quando algo muda, senão `useSyncExternalStore` não vê diferença.
+ */
+let snapshot: SceneParams = { ...params };
 const listeners = new Set<() => void>();
 
 export function getSceneParams(): SceneParams {
   return params;
+}
+
+/** Mesma coisa que `getSceneParams`, mas com identidade estável por mudança. */
+export function getSceneParamsSnapshot(): SceneParams {
+  return snapshot;
+}
+
+function publish(): void {
+  snapshot = { ...params };
+  listeners.forEach((listener) => listener());
 }
 
 /** Atualiza só as chaves passadas e avisa os assinantes (se algo mudou de fato). */
@@ -47,7 +63,7 @@ export function setSceneParams(patch: Partial<SceneParams>): void {
       changed = true;
     }
   }
-  if (changed) listeners.forEach((listener) => listener());
+  if (changed) publish();
 }
 
 export function subscribeSceneParams(listener: () => void): () => void {
@@ -60,5 +76,5 @@ export function subscribeSceneParams(listener: () => void): () => void {
 /** Restaura os valores padrão (usado nos testes). */
 export function resetSceneParams(): void {
   params = { ...DEFAULT_SCENE_PARAMS };
-  listeners.forEach((listener) => listener());
+  publish();
 }

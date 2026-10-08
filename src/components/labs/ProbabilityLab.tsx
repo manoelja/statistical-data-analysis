@@ -4,6 +4,7 @@ import { QuestionCard } from '../lab/QuestionCard';
 import { DistributionBars, Reveal, Slider, Stat } from '../lab/Controls';
 import { dbinom, dpois, fmt, pnorm, sci } from '../../lib/stats';
 import { setSceneParams } from '../../lib/scene/store';
+import { useSceneParams } from '../../hooks/useSceneParams';
 
 const ITEMS = [
   { id: 'q1', short: 'Binomial' },
@@ -130,19 +131,20 @@ function PoissonLab() {
 }
 
 function NormalLab() {
-  const [mu, setMu] = useState(3250);
-  const [sigma, setSigma] = useState(500);
+  // μ e σ moram no **store**, não em `useState`: são os únicos parâmetros que a
+  // cena 3D também mexe (o histograma é arrastável), e com duas cópias a tela
+  // mostrava dois "μ" diferentes ao mesmo tempo — o card parado enquanto a curva
+  // andava. O store é a fonte única: o slider escreve nele e a cena o lê.
+  const { mu, sigma } = useSceneParams();
   const [x1, setX1] = useState(2500);
   const [x2, setX2] = useState(3000);
   const [x3, setX3] = useState(4000);
 
-  useEffect(() => {
-    setSceneParams({ mu, sigma });
-  }, [mu, sigma]);
-
   const z1 = (x1 - mu) / sigma;
   const pBelow = pnorm(x1, mu, sigma);
-  const pBetween = pnorm(x3, mu, sigma) - pnorm(x2, mu, sigma);
+  // x₂ e x₃ são sliders separados: um intervalo vazio (x₂ > x₃) é probabilidade
+  // zero, nunca negativa
+  const pBetween = Math.max(0, pnorm(x3, mu, sigma) - pnorm(x2, mu, sigma));
   const expected = pBelow * 8000;
 
   return (
@@ -158,8 +160,8 @@ function NormalLab() {
       }
     >
       <div className="controls">
-        <Slider label="μ (g)" value={mu} min={2500} max={4000} step={50} display={`${mu} g`} onChange={setMu} />
-        <Slider label="σ (g)" value={sigma} min={100} max={800} step={50} display={`${sigma} g`} onChange={setSigma} />
+        <Slider label="μ (g)" value={mu} min={2500} max={4000} step={50} display={`${mu} g`} onChange={(v) => setSceneParams({ mu: v })} />
+        <Slider label="σ (g)" value={sigma} min={100} max={800} step={50} display={`${sigma} g`} onChange={(v) => setSceneParams({ sigma: v })} />
         <Slider label="x₁ (limite inferior)" value={x1} min={1500} max={4500} step={50} display={`${x1} g`} onChange={setX1} />
         <Slider label="x₂ / x₃ (intervalo)" value={x2} min={1500} max={4500} step={50} display={`${x2} g`} onChange={setX2} />
         <Slider label="x₃ (limite superior)" value={x3} min={1500} max={4500} step={50} display={`${x3} g`} onChange={setX3} />
