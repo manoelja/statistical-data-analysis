@@ -1,4 +1,4 @@
-import { act, fireEvent, render } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitForElementToBeRemoved } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ProbabilityLab } from './ProbabilityLab';
 import { DEFAULT_SCENE_PARAMS, getSceneParams, resetSceneParams, setSceneParams } from '../../lib/scene/store';
@@ -61,7 +61,7 @@ describe('ProbabilityLab → quadro animado (unificação)', () => {
     expect(getByText(/P\(x₂ < X < x₃\)/).nextElementSibling?.textContent).toBe('0,0000');
   });
 
-  it('mostra uma questão por vez, trocando pela trilha', () => {
+  it('mostra uma questão por vez, trocando pela trilha', async () => {
     const { getByRole, getByLabelText, queryByLabelText, getByText, queryByRole } =
       render(<ProbabilityLab />);
 
@@ -74,58 +74,86 @@ describe('ProbabilityLab → quadro animado (unificação)', () => {
     expect(getByRole('heading', { name: /peso ao nascer/i })).toBeInTheDocument();
     expect(getByLabelText('μ (g)')).toBeInTheDocument();
     expect(queryByLabelText('λ (admissões/hora)')).toBeNull();
-    expect(queryByRole('heading', { name: /equipamentos com defeito/i })).toBeNull();
-  });
-
-  it('"próximo" atravessa a sessão inteira, um card por vez', () => {
-    const { getByRole, getByLabelText, queryByLabelText, getByText } = render(
-      <ProbabilityLab />,
+    // a questão que sai ainda fica montada durante a animação de sobreposição
+    await waitForElementToBeRemoved(() =>
+      queryByRole('heading', { name: /equipamentos com defeito/i }),
     );
-
-    const next = getByRole('button', { name: 'Próxima questão' });
-    const previous = getByRole('button', { name: 'Questão anterior' });
-
-    // a trilha da ProbabilityLab é Binomial → Poisson → Normal
-    expect(getByText('1 de 3')).toBeInTheDocument();
-    expect(getByLabelText('p (defeito)')).toBeInTheDocument();
-    // começa na primeira: só o botão de próximo existe
-    expect(previous).toBeDisabled();
-
-    // um clique, uma questão — e a anterior some, porque o painel é remontado
-    fireEvent.click(next);
-    expect(getByText('2 de 3')).toBeInTheDocument();
-    expect(getByLabelText('λ (admissões/hora)')).toBeInTheDocument();
-    expect(queryByLabelText('p (defeito)')).toBeNull();
-    expect(previous).toBeEnabled();
-
-    fireEvent.click(next);
-    expect(getByText('3 de 3')).toBeInTheDocument();
-    expect(getByLabelText('μ (g)')).toBeInTheDocument();
-    expect(queryByLabelText('λ (admissões/hora)')).toBeNull();
-
-    // a última não dá a volta: fechar o ciclo trocaria o assunto sem aviso
-    fireEvent.click(next);
-    expect(getByLabelText('μ (g)')).toBeInTheDocument();
-    expect(next).toBeDisabled();
-
-    // e voltar refaz o caminho até a primeira, onde o próximo reacte
-    fireEvent.click(previous);
-    expect(getByLabelText('λ (admissões/hora)')).toBeInTheDocument();
   });
 
-  it('voltar nunca sai da sessão: os três painéis são os três itens da trilha', () => {
+  it('clicar no cartão traz a próxima questão, uma por vez', async () => {
+    const { getByRole, getByLabelText, queryByLabelText, getByText } =
+      render(<ProbabilityLab />);
+
+    const deck = getByRole('group', { name: /questões de/i });
+    expect(getByText('Questão 1 de 3')).toBeInTheDocument();
+
+    // o toque curto no cartão vira a questão (o `useLongPress` usa pointer)
+    fireEvent.pointerDown(deck);
+    fireEvent.pointerUp(deck);
+
+    expect(getByLabelText('λ (admissões/hora)')).toBeInTheDocument();
+    expect(getByText('Questão 2 de 3')).toBeInTheDocument();
+    await waitForElementToBeRemoved(() => queryByLabelText('p (defeito)'));
+  });
+
+  it('a última questão dá a volta para a primeira', async () => {
+    const { getByRole } = render(<ProbabilityLab />);
+
+    // vai direto para a última pela trilha
+    fireEvent.click(getByRole('tab', { name: /normal/i }));
+
+    const deck = getByRole('group', { name: /questões de/i });
+    fireEvent.pointerDown(deck);
+    fireEvent.pointerUp(deck);
+
+    // da Normal a próxima é a Binomial: a pilha fecha o ciclo
+    expect(await screen.findByLabelText('p (defeito)')).toBeInTheDocument();
+  });
+
+  it('a resolução abre **sobre** o conteúdo, com fechamento próprio', () => {
+    const { getByRole, getByLabelText, queryByLabelText } = render(<ProbabilityLab />);
+
+    const toggle = getByRole('button', { name: /ver resolução passo a passo/i });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.click(toggle);
+
+    const panel = getByLabelText('Resolução passo a passo');
+    // a camada mora **dentro do corpo do cartão**: é contra ele que o
+    // `.reveal__panel` se posiciona, para cobrir o conteúdo em vez de
+    // empurrá-lo (o `margin-top`/`fio` que ele tinha antes saíram)
+    expect(panel.closest('.qcard__body')).not.toBeNull();
+    expect(panel).toHaveTextContent('0,000008');
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+    fireEvent.click(getByRole('button', { name: /fechar resolução/i }));
+    expect(queryByLabelText('Resolução passo a passo')).toBeNull();
+  });
+
+  it('arrastar o conteúdo não vira questão: é a rolagem do que não coube', () => {
     const { getByRole, getByText } = render(<ProbabilityLab />);
-    const previous = getByRole('button', { name: 'Questão anterior' });
 
-    // dois passos para a frente e três para trás = a primeira questão de novo,
-    // e não uma anterior que não existe
-    fireEvent.click(getByRole('button', { name: 'Próxima questão' }));
-    fireEvent.click(getByRole('button', { name: 'Próxima questão' }));
-    fireEvent.click(previous);
-    fireEvent.click(previous);
-    fireEvent.click(previous);
+    const deck = getByRole('group', { name: /questões de/i });
+    // o card tem altura travada: nas questões altas o conteúdo é maior que a
+    // janela e rola dentro dela. Um arrasto é essa rolagem — se contasse como
+    // toque, não haveria como ler o resto da questão.
+    fireEvent.pointerDown(deck, { clientX: 100, clientY: 300 });
+    fireEvent.pointerMove(deck, { clientX: 102, clientY: 240 });
+    fireEvent.pointerUp(deck, { clientX: 102, clientY: 240 });
 
-    expect(previous).toBeDisabled();
-    expect(getByText('1 de 3')).toBeInTheDocument();
+    expect(getByText('Questão 1 de 3')).toBeInTheDocument();
+    expect(getByText(/equipamentos com defeito/i)).toBeInTheDocument();
+  });
+
+  it('um toque torto de dedo ainda vira questão', () => {
+    const { getByRole, getByText } = render(<ProbabilityLab />);
+
+    const deck = getByRole('group', { name: /questões de/i });
+    // 4px de tremor é tremor, não arrasto: a tolerância existe para o dedo
+    fireEvent.pointerDown(deck, { clientX: 100, clientY: 300 });
+    fireEvent.pointerMove(deck, { clientX: 102, clientY: 296 });
+    fireEvent.pointerUp(deck, { clientX: 102, clientY: 296 });
+
+    expect(getByText('Questão 2 de 3')).toBeInTheDocument();
   });
 });

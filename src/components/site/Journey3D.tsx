@@ -20,7 +20,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowUp, Gauge } from 'lucide-react';
+import { ArrowUp } from 'lucide-react';
 import { useRafLoop } from '../../hooks/useRafLoop';
 import { Overview } from './Overview';
 import { ProbabilityLab } from '../labs/ProbabilityLab';
@@ -224,18 +224,6 @@ export function Journey3D() {
         element.style.visibility = pose.opacity > 0.02 ? 'visible' : 'hidden';
       }
 
-      // O card rola por dentro. Só o card em foco interessa, então uma leitura
-      // por quadro basta para dizer se há conteúdo abaixo (o degradê do rodapé)
-      // ou se o fim já foi alcançado.
-      const focused = cardRefs.current[chapterIndexAt(progress)];
-      const inner = focused?.firstElementChild as HTMLElement | undefined;
-      if (inner) {
-        const overflowing = inner.scrollHeight - inner.clientHeight > 4;
-        const atEnd = !overflowing || inner.scrollTop + inner.clientHeight >= inner.scrollHeight - 4;
-        inner.classList.toggle('is-overflowing', overflowing && !atEnd);
-        inner.classList.toggle('is-at-end', atEnd);
-      }
-
       viewerRef.current?.render();
 
       const next = chapterIndexAt(progress);
@@ -349,7 +337,12 @@ export function Journey3D() {
           </p>
         </div>
 
-        {/* cards: um por etapa, com o conteúdo real daquela parte */}
+        {/* cards: um por etapa, com o conteúdo real daquela parte. Não há
+            moldura em volta: o que aparece é só a peça de conteúdo, que já
+            traz o próprio papel. A caixa existe pela altura travada (é ela
+            que segura a dobra do capítulo) e pelo halo do texto. Cada grupo de
+            peças vira uma **pilha de cartões** (`CardDeck`): uma peça por vez,
+            clicar avança. */}
         {JOURNEY_CHAPTERS.map((chapter, index) => (
           <article
             key={chapter.id}
@@ -357,16 +350,9 @@ export function Journey3D() {
               cardRefs.current[index] = element;
             }}
             className={`journey__card journey__card--${chapter.cardSide}`}
-            aria-labelledby={`${chapter.id}-titulo`}
+            aria-label={chapter.title}
           >
             <div className="journey__card-inner">
-              <p className="journey__scene">
-                <Gauge size={13} aria-hidden="true" />
-                <span id={`${chapter.id}-titulo`}>
-                  Cena {String(index + 1).padStart(2, '0')} · <strong>{chapter.title}</strong>
-                </span>
-                <em>{chapter.tagline}</em>
-              </p>
               <div className="journey__card-body">{CARD_CONTENT[index]}</div>
             </div>
           </article>

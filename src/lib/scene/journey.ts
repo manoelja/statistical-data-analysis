@@ -514,10 +514,24 @@ export function cardPose(index: number, progress: number): CardPose {
     chapter.cardSide === 'center' ? 0 : chapter.cardSide === 'bottom' ? -1 : chapter.cardSide === 'left' ? -1 : 1;
   const eased = phase * phase * (3 - 2 * Math.abs(phase));
 
+  // A escala acompanha o **fade**, e não a fase.
+  //
+  // Escala fracionária obriga o navegador a rasterizar o card inteiro — texto
+  // incluído — numa escala não inteira, e a letra sai macia. Isso não valia só
+  // para o card que estava entrando ou saindo: `eased` é zero **no meio** da
+  // janela e cresce até 1 nas pontas, de modo que a escala passava de 1,000 a
+  // 1,020 durante toda a transição — e era a letra de todos os cards da
+  // jornada que aparecia suavizada o tempo todo.
+  //
+  // Amarrando a escala à opacidade, o card cresce enquanto aparece e encolhe
+  // enquanto some, e no estado em que ele se lê — opacidade 1 — a escala é
+  // exatamente 1. O texto nítido.
+  const fade = 1 - clamp(opacity, 0, 1);
+
   return {
     opacity: clamp(opacity, 0, 1),
     shift: lateral * eased * 26,
-    scale: 1 + Math.abs(eased) * 0.02,
+    scale: 1 + Math.abs(eased) * 0.02 * fade,
   };
 }
 

@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
    JORNADA 3D — cards durante o percurso
    ============================================================
    O palco é `sticky` de uma tela dentro de uma seção de 600vh:
@@ -83,6 +83,12 @@
      e a peça ao lado ficava espremida num canto. O corredor é a obra, não o
      texto. */
   width: min(26rem, 34vw);
+  /* O card é o **contêiner** de todo o conteúdo, e a densidade responde a ele —
+     não à janela. A largura aqui é `min(26rem, 34vw)`: numa janela de 780px o
+     card já é de 265px, e antes ele recebia tipografia de página cheia só
+     porque a janela não tinha chegado em 768px. A partir daqui quem decide o
+     tamanho do texto é a largura desta caixa, que é a que importa. */
+  container-type: inline-size;
   /* nasce escondido: o loop publica a pose real a cada quadro */
   opacity: 0;
   visibility: hidden;
@@ -129,10 +135,10 @@
     scale(var(--journey-scale));
 }
 
-/* Nada de superfície aqui também — a herança já é transparente. O que muda é a
-   altura: a faixa é baixa de propósito, para sobrar nebulosa em volta. */
+/* A faixa é baixa de propósito, para sobrar nebulosa em volta dos botões — que,
+   sem moldura, são o único conteúdo dela. */
 .journey__card--bottom .journey__card-inner {
-  max-height: min(36vh, 20rem);
+  height: min(36vh, 20rem);
   text-align: center;
 }
 
@@ -140,63 +146,99 @@
    buraco negro, com o quadro escuro e nenhum card. Quem manda na opacidade de
    todos eles é o `cardPose`, publicado a cada quadro pelo loop. */
 
+/* Nada mais separa o conteúdo da cena: **não há moldura**. O que aparece no
+   quadro é só o cartão que está dentro — as peças de conteúdo já têm papel,
+   borda e raio próprios (`.ov-card`, `.qcard`, `.formula`, `.panel`), e uma
+   moldura em volta delas só desenhava uma caixa vazia em volta de outra caixa.
+   Esta caixa continua existindo por dois motivos que não são visuais:
+   a **altura travada** (é ela que faz o capítulo ter a mesma presença no
+   corredor e o que não couber virar rolagem em vez de dobra) e o **halo escuro**
+   do texto — os laboratórios são desenhados em giz claro sobre um quadro escuro,
+   então é o halo que dá contraste em qualquer ponto do corredor. */
 .journey__card-inner {
-  /* altura contida: o card cabe na tela sem virar um painel de tela cheia */
-  max-height: min(52vh, 29rem);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 1rem 1.1rem 0.9rem;
-  border-radius: var(--radius-lg);
-  /* **Sem superfície.** O card é uma moldura de vidro sobre a cena: fundo
-     transparente, sem desfoque e sem sombra. Antes eram 92% de papel com blur de
-     14px, e o resultado era uma placa opaca em cima da peça 3D — que é a obra.
-     O que sustenta a leitura não é o papel, e sim o halo escuro do texto:
-     os laboratórios são desenhados em giz claro sobre um quadro escuro, então um
-     halo na cor do fundo dá contraste em qualquer ponto do corredor sem
-     devolveu a parede de papel. */
-  border: 1px solid color-mix(in srgb, var(--rule-strong) 26%, transparent);
-  background: transparent;
-  text-shadow: 0 1px 3px color-mix(in srgb, var(--board-1) 82%, transparent);
-  transition:
-    border-color 0.28s var(--ease),
-    box-shadow 0.28s var(--ease);
+  /* **Altura fixa, não `max-height`.** O card tinha `max-height` + barra de
+     rolagem interna, e a dobra mudava de tamanho conforme o conteúdo de cada
+     capítulo. Com a altura travada o card tem sempre a mesma presença no
+     corredor e o que não cabe vira rolagem — que é o que escondia a peça 3D ao
+     lado atrás de uma lista rolável. */
+  /* Altura pelo que a **janela** permite, não por um teto fixo. O `height` do
+     card é a variável que decide se a peça mais alta (a questão 5 da Parte 2:
+     4 campos + 5 resultados + dois parágrafos) cabe ou vira rolagem. O teto
+     fixo que havia aqui (28rem = 448px, atingido já numa janela de ~860px)
+     parava o card antes do conteúdo: `52vh` nunca chegava a valer no desktop.
+
+     A conta agora é a do espaço real: o card é centrado num palco de 100vh, e a
+     barra fixa de cima (68px) e a régua de profundidade embaixo (~53px) não
+     podem ser atravessadas — 9,5rem reservam os dois com folga. O `42rem`
+     continua como teto para não esticar o card numa janela muito alta. */
+  height: min(calc(100vh - 9.5rem), 42rem);
+  /* A base tipográfica do card. O conteúdo inteiro dos laboratórios é herdado
+     (ou declarado em `em`), então é daqui que vem boa parte do ganho — o que
+     tem `rem` fixo está listado um a um na densidade abaixo. */
+  font-size: 0.82rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  /* `--paper` e não `--board-1`: esse token não existe em lugar nenhum do tema,
+   e uma cor `var()` que não resolve invalida a propriedade inteira — o halo,
+   que é o que segura a leitura sobre o quadro 3D, simplesmente não existia */
+  text-shadow: 0 1px 3px color-mix(in srgb, var(--paper) 82%, transparent);
 }
 
 /* O que ainda precisa de superfície são as **peças com dados**: uma tabela, um
    conjunto de números e um gráfico não se leem sobre um painel 3D em movimento
    só com halo. Elas recebem papel próprio e curto — é o conteúdo que é opaco, não
-   o card. */
+   o card.
+
+   A `.formula` **não** entra aqui: ela já é um card de vidro (`.card-base`), e
+   esta regra acrescentaria uma segunda superfície e um segundo borrão sobre a
+   mesma caixa. */
 .journey__card .controls,
 .journey__card .results,
 .journey__card .data-table,
-.journey__card .mini-chart,
-.journey__card .formula {
+.journey__card .mini-chart {
   background: color-mix(in srgb, var(--paper) 72%, transparent);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   border-radius: var(--radius-md);
 }
 
-/* o scale do pose (cardPose) já é publicado no card; um transform no inner
-   brigaria com ele — o hover só muda a cor */
-.journey__card-inner:hover {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--rule-strong));
+/* ---------- a janela de conteúdo e a navegação entre páginas ---------- */
+
+/* O `flex: 1` é o que dá a altura útil: o card é `height` fixa, a linha da cena
+   e o rodapé ficam com a altura deles, e esta caixa fica com o que sobrar. É
+   nela que a medição acontece (`clientHeight`). */
+.journey__card-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
-/* barra de rolagem fina dentro do card */
-.journey__card-inner {
-  scrollbar-width: thin;
-  scrollbar-color: var(--accent) transparent;
+/* O conteúdo ocupa a altura útil: a seção vira uma coluna e a pilha de cartões
+   (ou o contato) fica com o que sobra. */
+.journey__card-body > * {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
 }
 
-.journey__card-inner::-webkit-scrollbar {
-  width: 8px;
+/* o contato é uma peça só: centraliza em vez de esticar */
+.journey__card-body > .contact {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
-.journey__card-inner::-webkit-scrollbar-thumb {
-  border-radius: var(--radius-pill);
-  background: linear-gradient(180deg, var(--accent), var(--gold));
-}
+/* A rolagem dos laboratórios é a **pista** de que a peça continua: ali a barra
+   de rolagem é visível (ver `.questions` mais abaixo), porque as partes 1 e 2 são
+   as únicas cujo conteúdo é mais alto que o card. Nas demais peças — a visão
+   geral, os resultados, o formulário — a barra fica escondida e quem avisa é a
+   borda esmaçada do `.deck__card`, que é regra do `CardDeck` (ver `global.css`). */
+
+
 
 /* ---------- placa do prólogo e do epílogo (buraco negro e buraco branco) --- */
 
@@ -231,37 +273,69 @@
 .journey__prologue-eyebrow {
   font-family: var(--font-mono);
   font-size: 0.7rem;
-  letter-spacing: 0.24em;
+  letter-spacing: var(--label-tracking);
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.66);
   margin-bottom: 0.9rem;
 }
 
 .journey__prologue-title {
+  /* A voz do título, a mesma da marca da barra: fonte, peso, tracking e corte
+     óptico vêm dos tokens (ver `:root`). O `opsz` fixo é o que faz a placa e a
+     marca serem a mesma letra — sem ele cada uma sai no corte que o navegador
+     escolhe pelo próprio `font-size`, e uma fonte vira duas tipografias. */
   font-family: var(--font-display);
-  font-size: clamp(1.9rem, 5.4vw, 3.6rem);
-  line-height: 1.05;
-  letter-spacing: -0.02em;
+  font-weight: var(--title-weight);
+  font-variation-settings: 'opsz' var(--title-opsz);
+  /* A placa é o título **da página** — o primeiro texto que se lê depois da
+     marca, em cima da coisa mais escura da tela. Ela precisa de corpo para
+     sustentar isso. */
+  font-size: clamp(2.1rem, 6vw, 3.8rem);
+  /* 1.06: Fraunces tem ascendente e descendente longos, e o entrelinha curto os
+     gruda na linha vizinha */
+  line-height: 1.06;
+  /* tracking de display: em serifa com contraste alto o olho "abre" o espaço
+     entre as letras e o título fica largo demais no mesmo peso */
+  letter-spacing: var(--title-tracking);
+  /* o gradiente recorta a caixa de linha: sem esta folga a ponta da ascendente
+     encosta na própria borda do gradiente e some */
+  padding-block: 0.06em;
+  /* título de duas linhas que se repartem, em vez de uma linha cheia e uma
+     palavra órfã */
+  text-wrap: balance;
   margin: 0;
-  /* o texto é "atravessado" pelo disco: o gradiente abre um vão no meio,
-     como se a luz do buraco o empurrasse para os lados */
-  background: linear-gradient(
+  /* O vão do disco continua, mas **com fundo**. Antes o gradiente ia a
+     `transparent` no meio e apagava a letra inteira: o que sobrava eram duas
+     barras brancas e os contrários — a imagem de um borrão, não de uma palavra.
+     Agora a faixa desce a 58% em vez de desaparecer, e é estreita: o disco
+     passando à frente, com a palavra inteira legível atrás dele. */
+  background-image: linear-gradient(
     180deg,
     #ffffff 0%,
-    #ffffff 34%,
-    transparent 50%,
-    #ffffff 66%,
+    #ffffff 32%,
+    rgba(255, 255, 255, 0.88) 41%,
+    rgba(255, 255, 255, 0.58) 50%,
+    rgba(255, 255, 255, 0.88) 59%,
+    #ffffff 68%,
     #ffffff 100%
   );
   -webkit-background-clip: text;
   background-clip: text;
+  /* A cor fica transparente para o gradiente aparecer, mas o **halo** continua
+     pintado (a sombra sai do contorno da letra, não da cor): é ele que dá a
+     silhueta sobre a nebulosa acesa e sustenta a faixa do meio, onde o branco
+     já desceu para 58%. */
   color: transparent;
+  text-shadow:
+    0 0 16px rgba(4, 6, 12, 0.92),
+    0 2px 34px rgba(0, 0, 0, 0.85);
 }
 
-/* no epílogo o vão não faria sentido: o buraco branco **ilumina** o texto por
-   baixo, e a página está a caminho do branco — o título é branco sólido */
+/* No epílogo o disco não atravessa: o buraco branco **ilumina** o texto por baixo
+   (é a mesma conta ao contrário) e a página está a caminho do branco — título
+   branco sólido, com o brilho quente de baixo e nenhum vão. */
 .journey__epilogue .journey__prologue-title {
-  background: none;
+  background-image: none;
   color: #fff;
   text-shadow:
     0 2px 26px rgba(0, 0, 0, 0.9),
@@ -276,69 +350,11 @@
   color: rgba(255, 255, 255, 0.84);
 }
 
-/* o card rola por dentro, mas nada dizia isso: um degradê no rodapé Some
-   assim que o conteúdo acaba (a classe é publicada pelo loop) */
-.journey__card-inner {
-  position: relative;
-}
-
-/* o conteúdo é denso e o degradê precisa ter espaço para existir */
-.journey__card-inner.is-overflowing {
-  padding-bottom: 1.6rem;
-}
-
-/* quando ainda há conteúdo abaixo, o rodapé dissolve e avisa que dá para rolar */
-.journey__card-inner.is-overflowing::after {
-  content: '';
-  position: sticky;
-  display: block;
-  bottom: -1.6rem;
-  height: 2.8rem;
-  margin: -2.8rem -1.2rem -1.6rem;
-  pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    transparent,
-    color-mix(in srgb, var(--paper) 92%, transparent) 76%
-  );
-}
-
-/* quando o fim foi alcançado, nada some: o degradê sai */
-.journey__card-inner.is-at-end::after {
-  content: none;
-}
-
-/* ---------- etiqueta da cena ---------- */
-
-.journey__scene {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.15rem 0.45rem;
-  margin-bottom: 0.75rem;
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-
-.journey__scene strong {
-  color: var(--accent);
-  font-weight: 600;
-}
-
-.journey__scene em {
-  font-family: var(--font-body);
-  font-size: 0.78rem;
-  font-style: normal;
-  letter-spacing: normal;
-  text-transform: none;
-  color: var(--ink-faint);
-}
-
 /* ---------- o conteúdo de contato (a faixa do rodapé) ---------- */
 
+/* A sala de contato é **só os botões**: cada um já tem superfície própria, e a
+   faixa não tem moldura nenhuma (ver `.journey__card-inner`) — então não sobra
+   nada para o texto flutuar sobre a nebulosa. */
 .contact__actions {
   display: flex;
   flex-wrap: wrap;
@@ -346,10 +362,8 @@
   gap: 0.5rem;
 }
 
-/* O card de contato é transparente (ver `.journey__card--bottom`), então cada
-   peça aqui carrega a **própria** superfície: com o papel do card embaixo, 70% e
-   60% bastavam; sem ele, o brilho da nebulosa atravessava os botões. Estes dois
-   valores são o que segura a leitura depois da remoção. */
+/* Sem moldura e sem texto solto, a superfície de cada botão é o que segura a
+   leitura: o brilho da nebulosa atravessaria um botão só com a borda. */
 .contact__btn {
   display: inline-flex;
   align-items: center;
@@ -382,71 +396,151 @@
   opacity: 0.5;
 }
 
+/* O botão "sobre" é o único que **não** sai da página: é um gatilho, e por isso
+   é o único que carrega estado. O `aria-expanded` já contava isso para o leitor
+   de tela; aqui o mesmo estado acende a borda e gira o chevron, para quem só
+   olha. O giro é o que diz qual lado a caixa abre — ela abre **para baixo**. */
+.contact__btn--toggle[aria-expanded='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.contact__chevron {
+  margin-left: -0.15rem;
+  opacity: 0.7;
+  transition: transform 0.24s var(--ease);
+}
+
+.contact__btn--toggle[aria-expanded='true'] .contact__chevron {
+  transform: rotate(180deg);
+  opacity: 1;
+}
+
+/* A caixa é uma **nota de rodapé**, não um parágrafo de abertura. Ela abria com
+   a largura da faixa inteira (52rem) para caber três linhas de texto, que é
+   caixa demais para o que é: a largura agora é a do texto, o respiro é curto e a
+   tipografia é miúda — é a última coisa que se lê antes de sair da página, e não
+   pode competir com a nebulosa que está acendendo atrás dela. */
 .contact__about {
   overflow: hidden;
-  margin-top: 0.75rem;
-  padding: 0.85rem 1rem;
+  margin: 0.6rem auto 0;
+  width: min(100%, 32rem);
+  padding: 0.6rem 0.75rem;
   border: 1px solid var(--rule);
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--paper) 74%, transparent);
   text-align: left;
 }
 
-/* O `lead` é o único texto do card que **não** tem superfície nenhuma atrás: ele
-   flutua direto sobre a nebulosa, que é brilhante e de cor variável. O halo
-   escuro é o que garante contraste — sem ele, a frase acende ou apaga conforme
-   qual parte do gás passa por trás dela. */
-.contact__lead {
-  max-width: 34rem;
-  margin: 0 auto 0.9rem;
-  font-size: 0.9rem;
+.contact__about p {
+  margin: 0;
+  font-size: 0.8rem;
   line-height: 1.55;
   color: var(--ink-soft);
-  text-shadow:
-    0 1px 3px color-mix(in srgb, var(--board-1) 78%, transparent),
-    0 2px 14px color-mix(in srgb, var(--board-1) 62%, transparent);
+  text-wrap: pretty;
 }
 
-.contact__about p {
-  max-width: 40rem;
-  margin: 0 auto;
-  font-size: 0.84rem;
-  line-height: 1.6;
-  color: var(--ink-soft);
-}
-
+/* a origem dos dados: uma linha só, em mono e apagada */
 .contact__about-meta {
-  margin-top: 0.5rem !important;
+  margin-top: 0.35rem;
   font-family: var(--font-mono);
-  font-size: 0.7rem !important;
+  font-size: 0.66rem;
   letter-spacing: 0.04em;
-  color: var(--ink-faint) !important;
+  color: var(--ink-faint);
 }
 
 /* ---------- o conteúdo real dentro do card ---------- */
 
 /* as seções foram desenhadas para a página larga: dentro do card elas
-   perdem o padding de página, o cabeçalho redundante e a grade dupla */
+   perdem o padding de página, o cabeçalho redundante e a grade dupla.
+   A seção e o container viram colunas para a pilha de cartões ganhar altura. */
 .journey__card .section {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   padding: 0;
 }
 
 .journey__card .container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
   width: 100%;
 }
 
-/* O card já se anuncia no alto (`.journey__scene`: "Cena 03 · Parte 2 —
-   Inferência" + o tagline da etapa), então repetir o h2 e o parágrafo de
-   dentro da seção só empurrava a dobra. Some com o cabeçalho inteiro: o
-   conteúdo que importa é o que vem depois dele. */
+/* a pilha fica com toda a sobra do container */
+.journey__card .deck {
+  flex: 1;
+  min-height: 0;
+}
+
+/* O cabeçalho da seção (eyebrow + h2 + parágrafo) some: ele descreve a etapa,
+   e a etapa já é dita pela régua da jornada e pelo `aria-label` do card. Dentro
+   do card fica só a peça que se usa. Sumir também no celular é a decisão certa:
+   lá não há moldura, e ele viraria um bloco de texto solto no topo do cartão. */
 .journey__card .section-head {
   display: none;
 }
 
-/* trilha de estudo vira barra de abas dentro do card */
+/* trilha de estudo vira barra de abas dentro do card; as abas no topo e a
+   questão (a pilha) com a sobra da altura */
 .journey__card .lab__layout {
   grid-template-columns: 1fr;
+  grid-template-rows: auto minmax(0, 1fr);
+  /* `stretch`, e não o `start` da trilha da página: com `align-items: start` a
+     questão é dimensionada pelo **conteúdo**, transborda da linha `1fr` e nunca
+     rola — o card a cortava calada (o `overflow: hidden` do
+     `.journey__card-inner`), e era o corte mudo das partes 1 e 2. Esticada, ela
+     fica com a altura útil da linha e o excesso vira rolagem, que é o que a
+     barra abaixo diz. */
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
   gap: 0.75rem;
+}
+
+/* A questão fica com a altura útil do card — e a densidade (ver "densidade",
+   abaixo) fecha a peça mais alta dentro dela, então **não há barra para
+   mostrar**. Foi por isso que as regras da barra saíram daqui, junto com o
+   `scrollbar-gutter`: ele reservava 8px de canaleta **sempre**, com ou sem
+   rolagem, e o que sobrava era um filete vazio estreitando o conteúdo pela
+   direita.
+
+   O `overflow-y: auto` continua como **rede**, não como recurso de leitura:
+   numa janela muito mais baixa do que a peça (ou com o tamanho de texto do
+   sistema ampliado) rolar é melhor que cortar em silêncio — e aí quem aparece é
+   a barra do tema, a mesma do resto da página. O `contain` impede que essa
+   rolagem empurre a página: a jornada avança pelo scroll da janela, e ler a
+   questão não pode adiantar o capítulo. */
+.journey__card .questions {
+  min-height: 0;
+  /* `overflow-x` explícito: um eixo não pode ser `visible` enquanto o outro
+     rola — a CSS promove o `visible` a `auto`, e era daí que a questão podia
+     mostrar barra **horizontal**. Nada aqui rola para o lado. */
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* A barra **não é pintada** — e é isso que faz a troca de questão parar de
+     piscar. A carta que entra começa 16px abaixo (o `y` do `variants.enter`, em
+     `LabSection`) e um deslocamento de transform conta como área rolável: como
+     a questão preenche a caixa exatamente, esses 16px já bastavam para a barra
+     nascer por 0,36s.
+
+     Pior: a barra consome ~8px de largura, e a carta que sai já está em
+     absoluto com a largura **medida antes** dela — ficava 8px mais larga que a
+     caixa e disparava a barra horizontal também (uma barra causando a outra).
+     Sem barra pintada o problema morre na raiz: a largura não muda, então não
+     há cascata, e nada pisca.
+
+     A rolagem continua existindo (roda do mouse, arrasto, teclado): ela é a
+     rede para uma janela muito mais baixa do que a peça, e sem barra ela
+     também não rouba largura nenhuma. */
+  scrollbar-width: none;
+}
+
+.journey__card .questions::-webkit-scrollbar {
+  display: none;
 }
 
 .journey__card .rail {
@@ -455,8 +549,8 @@
   flex-wrap: wrap;
   gap: 0.35rem;
   border-left: 0;
-  border-bottom: 1px dashed var(--rule);
-  padding: 0 0 0.6rem;
+  border-bottom: 1px solid var(--rule);
+  padding: 0 0 0.45rem;
   margin-bottom: 0;
 }
 
@@ -471,7 +565,7 @@
   padding: 0.35rem 0.5rem;
   border: 1px solid var(--rule);
   border-radius: var(--radius-pill);
-  font-size: 0.82rem;
+  font-size: 0.74rem;
 }
 
 .journey__card .rail button:hover {
@@ -483,141 +577,164 @@
   background: var(--accent-soft);
 }
 
-/* A navegação da sessão: "Anterior · N de M · Próximo".
-   Vive **fora** do painel que remonta a cada questão (ver o comentário em
-   `LabSection`): dentro, o botão clicado seria destruído junto com a questão. */
-.journey__card .rail__nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-  padding-top: 0.6rem;
-  border-top: 1px dashed color-mix(in srgb, var(--rule-strong) 45%, transparent);
-}
-
-.journey__card .rail__nav button {
-  padding: 0.3rem 0.7rem;
-  border: 1px solid color-mix(in srgb, var(--rule-strong) 60%, transparent);
-  border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--paper) 60%, transparent);
-  color: var(--ink);
-  font-family: var(--font-body);
-  font-size: 0.78rem;
-  font-weight: 600;
-  transition:
-    border-color 0.2s var(--ease),
-    background 0.2s var(--ease);
-}
-
-.journey__card .rail__nav button:hover:not(:disabled) {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-
-/* desabilitado nas pontas: fechar o ciclo faria a última questão trocar pela
-   primeira sem sinal nenhum de que a sessão acabou */
-.journey__card .rail__nav button:disabled {
-  opacity: 0.32;
-  cursor: not-allowed;
-}
-
-.journey__card .rail__pos {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
-  color: var(--ink-faint);
-}
-
-.journey__card .compare,
-.journey__card .overview__grid,
-.journey__card .overview__grid--flip,
-.journey__card .formulas {
-  grid-template-columns: 1fr;
-}
-
 /* ---------- densidade: o mesmo conteúdo, bem mais compacto ---------- */
 
-/* everything here was sized for a 1200px page column; inside a 33rem card
-   the same rhythm would need three screens of scrolling */
+/* Everything here was sized for a 1200px page column; inside a 26rem card the
+   same rhythm would need three screens of scrolling. Com a altura do card travada
+   e a paginação no lugar da rolagem, o que não couber virou página do
+   `Próximo` — mas ainda vale caber mais por página, então a densidade aqui é
+   o que decide quantas páginas cada capítulo tem. */
 .journey__card .qcard__head {
-  padding: 0.9rem 1rem 0;
+  padding: 0.55rem 0.7rem 0;
 }
 
 .journey__card .qcard__head h3 {
-  font-size: 1.1rem;
-  margin: 0.55rem 0 0.35rem;
+  font-size: 0.92rem;
+  margin: 0.35rem 0 0.25rem;
 }
 
 .journey__card .qcard__prompt {
-  font-size: 0.86rem;
-  line-height: 1.5;
+  font-size: 0.74rem;
+  line-height: 1.4;
 }
 
 .journey__card .qcard__body {
-  padding: 0.85rem 1rem 1rem;
-  gap: 0.85rem;
+  padding: 0.55rem 0.7rem 0.65rem;
+  gap: 0.45rem;
 }
 
 .journey__card .controls {
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.6rem;
-  padding: 0.7rem 0.8rem;
+  /* Três colunas, e não duas. A conta fecha por pouco: com `minmax(120px)` a
+     largura útil do card fica em 362px e três colunas pediriam 376 — dois
+     pixels de sobra e o `auto-fit` caía para duas. Com cinco sliders isso são
+     três fileiras em vez de duas, e a fileira que sobrava era exatamente a que
+     empurrava o último resultado para fora do card. */
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+  gap: 0.4rem;
+  padding: 0.5rem 0.6rem;
 }
 
 .journey__card .results {
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 0.55rem;
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+  gap: 0.35rem;
 }
 
 .journey__card .result {
-  padding: 0.55rem 0.65rem;
+  padding: 0.35rem 0.45rem;
 }
 
 .journey__card .result__value {
-  font-size: 1.02rem;
+  font-size: 0.84rem;
+}
+
+.journey__card .result__label {
+  font-size: 0.58rem;
 }
 
 .journey__card .mini-chart {
-  height: 74px;
+  height: 52px;
 }
 
 .journey__card .data-table {
-  font-size: 0.82rem;
+  font-size: 0.7rem;
 }
 
 .journey__card .data-table th,
 .journey__card .data-table td {
-  padding: 0.4rem 0.5rem;
+  padding: 0.26rem 0.4rem;
 }
 
 .journey__card .formula {
-  padding: 0.75rem 0.85rem;
+  padding: 0.65rem 0.75rem;
 }
 
+.journey__card .formula__expr {
+  font-size: 0.76rem;
+  padding: 0.4rem 0.5rem;
+}
+
+/* sem `!important`: o padding e o título do painel saíram do `style` inline em
+   `Results.tsx` justamente para a densidade do card poder mandar. */
 .journey__card .panel {
-  padding: 0.9rem 1rem !important;
+  padding: 0.7rem 0.8rem;
 }
 
-.journey__card .panel h3 {
-  font-size: 1.05rem !important;
+.journey__card .panel__title {
+  font-size: 0.86rem;
 }
 
-.journey__card .flip-card {
-  height: 168px;
+.journey__card .panel__body {
+  font-size: 0.74rem;
 }
 
-.journey__card .flip-card__face {
-  padding: 0.9rem 1rem;
-  gap: 0.35rem;
+.journey__card .panel__table {
+  margin-top: 0.6rem;
 }
 
-.journey__card .flip-card__face h3 {
-  font-size: 1rem;
+.journey__card .panel__note {
+  margin-top: 0.5rem;
+  font-size: 0.74rem;
 }
 
-.journey__card .flip-card__hint {
-  display: none;
+/* A base de 0,82rem do card não alcança as peças que declaram tamanho próprio.
+   Estas são elas — é o mesmo degrau que a largura estreita já usava, promovido
+   a padrão do card porque o card só tem 26rem de largura: o corte de 24rem que
+   separava as duas densidades descrevia o card **antigo**, de 33rem. */
+.journey__card .field__label {
+  font-size: 0.72rem;
+  /* O rótulo de campo é o que mais quebra linha nestes cards estreitos
+     ("x̄ (média amostral)" não cabe em 92px de coluna em uma linha só). Com o
+     `line-height: 1.6` herdado, cada quebra custa uma linha inteira de altura. */
+  line-height: 1.25;
+}
+
+.journey__card .field__value,
+.journey__card .num-input {
+  font-size: 0.76rem;
+}
+
+.journey__card .qcard__tag {
+  font-size: 0.62rem;
+}
+
+.journey__card .result__hint {
+  font-size: 0.66rem;
+}
+
+.journey__card .reveal__toggle {
+  font-size: 0.78rem;
+}
+
+.journey__card .reveal__content,
+.journey__card .reveal__answer {
+  font-size: 0.8rem;
+}
+
+/* O cartão da visão geral não tem altura travada (a do flip era o que segurava
+   as duas faces), então aqui ele só encolhe tipografia e respiro. */
+.journey__card .ov-card {
+  padding: 0.8rem 0.9rem;
+  gap: 0.3rem;
+}
+
+.journey__card .ov-card h3 {
+  font-size: 0.92rem;
+}
+
+/* O número grande é a **segunda** voz do cartão, não a primeira. Sem esta
+   regra ele ficava a 1,6rem — quase o dobro do título acima — dentro de um
+   card cujo `h3` está a 0,92rem: a hierarquia virada, e em mono weight 600 o
+   número roubava a cena do cartão que o contém. */
+.journey__card .ov-card__big {
+  font-size: 1.05rem;
+}
+
+.journey__card .ov-card__face p {
+  font-size: 0.8rem;
+}
+
+.journey__card .ov-card__list {
+  font-size: 0.78rem;
 }
 
 /* ---------- régua de profundidade ---------- */
@@ -743,12 +860,12 @@
   }
 
   /* no celular a placa sobe: a régua e o "voltar ao topo" ocupam o rodapé */
-.journey__prologue {
+  .journey__prologue {
     bottom: clamp(3.6rem, 8vh, 5.5rem);
   }
 
   .journey__prologue-title {
-    font-size: clamp(1.6rem, 8vw, 2.4rem);
+    font-size: clamp(1.7rem, 8.5vw, 2.5rem);
   }
 
   .journey__prologue-note {
@@ -796,87 +913,18 @@
   }
 
   .journey__card--bottom .journey__card-inner {
-    max-height: min(44vh, 20rem);
+    height: min(44vh, 20rem);
   }
 
+  /* A altura aqui é da **janela**, não do card: ela é o que sobra entre a régua
+     no rodapé e o topo. No celular a peça 3D já está atrás do card (ele tem
+     86vw), então a altura que sobrava acima e abaixo era espaço morto — e era
+     justamente o espaço que cortava as questões das partes 1 e 2, que são as
+     mais altas (5 sliders + gráfico + resultados). O teto em `rem` sobe junto
+     com o do desktop: 30rem (480px) cortava as mesmas peças num aparelho alto,
+     onde o `84vh` pedia justamente os ~600px que o conteúdo pede. */
   .journey__card-inner {
-    max-height: min(56vh, 25rem);
-    padding: 0.85rem 0.95rem 0.75rem;
-    /* A base de todo o texto do card. Boa parte do conteúdo dos laboratórios é
-       herdado e por isso responde a isso; o que tem `rem` fixo está listado
-       abaixo, um por um. 0,9rem dá ~10% a menos em todo o corpo — o suficiente
-       para o cartão de largura curta render mais linhas sem scroll interno. */
-    font-size: 0.9rem;
-  }
-
-  /* no celular não há peça 3D ao lado: o card pode usar a tela toda */
-  .journey__card .section-head {
-    display: block;
-    margin-bottom: 1rem;
-  }
-
-  .journey__card .section-head .eyebrow {
-    display: inline-flex;
-  }
-
-  .journey__card .section-head h2 {
-    font-size: clamp(1.1rem, 5vw, 1.35rem);
-    margin: 0 0 0.4rem;
-  }
-
-  .journey__card .section-head p {
-    font-size: 0.82rem;
-  }
-
-  /* O resto do que tem `rem` fixo na densidade do desktop. A base de 0,9rem
-     acima não alcança estes: cada um declara o próprio tamanho. */
-  .journey__card .rail button {
-    font-size: 0.74rem;
-  }
-
-  .journey__card .rail__nav button {
-    font-size: 0.72rem;
-  }
-
-  .journey__card .qcard__head h3 {
-    font-size: 1rem;
-  }
-
-  .journey__card .qcard__prompt {
-    font-size: 0.78rem;
-  }
-
-  .journey__card .result__value {
-    font-size: 0.94rem;
-  }
-
-  .journey__card .data-table {
-    font-size: 0.74rem;
-  }
-
-  .journey__card .panel h3 {
-    font-size: 0.98rem !important;
-  }
-
-  .journey__card .flip-card__face h3 {
-    font-size: 0.92rem;
-  }
-
-  .journey__card .mini-chart {
-    height: 64px;
-  }
-
-  /* a trilha encolhe junto: três abas rotuladas não cabem em 86vw */
-  .journey__card .rail {
-    gap: 0.25rem;
-  }
-
-  .journey__card .rail button {
-    flex: 1 1 30%;
-  }
-
-  .journey__card .flip-card {
-    height: 176px;
+    height: min(84vh, 40rem);
   }
 
   .journey__meter {
@@ -901,6 +949,221 @@
     padding: 0.6rem;
     right: 0.9rem;
     bottom: 0.9rem;
+  }
+}
+
+/* ---------- densidade por largura do card ----------
+
+   Tudo que decide **quanto conteúdo cabe** mora aqui, e a consulta é ao card —
+   não à janela. A distinção é o que faz a diferença: a densidade precisa saber
+   o espaço que o texto tem, e esse espaço é `min(26rem, 34vw)`, que numa janela
+   de 780px já é 265px. Reagir à janela deixava um intervalo inteiro (de 768px
+   a ~1035px) em que o card estava estreito com tipografia de card largo.
+
+   O corte é em 24rem: abaixo disso o card tem largura de telefone estreito, que
+   é asituição em que os números grandes da densidade de desktop não cabem. */
+@container (max-width: 24rem) {
+  /* Largura de telefone estreito. O degrau largo da densidade já é o **padrão**
+     do card (ver "densidade", acima) — o corte de 24rem que separava as duas
+     densidades descrevia o card **antigo**, de 33rem: o de hoje tem no máximo
+     26rem. O que sobra aqui é só o que um card abaixo de 24rem pede a mais:
+     menos respiro, o rótulo da trilha fora e as abas quebrando em três. */
+
+  /* Menos respiro entre as peças. A altura aqui é contada em vírgula de tela,
+     não em pixels: cada padding e cada gap tirado aqui vale uma linha de
+     conteúdo a mais visível. */
+  .journey__card .lab__layout {
+    gap: 0.5rem;
+  }
+
+  /* a trilha perde o rótulo: as abas já dizem de quem é a questão */
+  .journey__card .rail__title {
+    display: none;
+  }
+
+  .journey__card .qcard__head {
+    padding: 0.5rem 0.65rem 0;
+  }
+
+  .journey__card .qcard__body {
+    padding: 0.5rem 0.65rem 0.6rem;
+    gap: 0.45rem;
+  }
+
+  .journey__card .field {
+    gap: 0.25rem;
+  }
+
+  /* Os dois que ficam um degrau abaixo do padrão: as abas da trilha (que também
+     quebram em três) e a etiqueta da questão. */
+  .journey__card .rail button {
+    font-size: 0.7rem;
+  }
+
+  .journey__card .qcard__tag {
+    font-size: 0.6rem;
+  }
+
+  .journey__card .field__label {
+    font-size: 0.7rem;
+  }
+
+  .journey__card .reveal__content,
+  .journey__card .reveal__answer {
+    font-size: 0.82rem;
+  }
+
+  .journey__card .formula__expr {
+    font-size: 0.74rem;
+  }
+
+  .journey__card .formula p {
+    font-size: 0.78rem;
+  }
+
+  .journey__card .ov-card h3 {
+    font-size: 0.82rem;
+  }
+
+  .journey__card .ov-card__face p {
+    font-size: 0.74rem;
+  }
+
+  .journey__card .ov-card__list {
+    font-size: 0.72rem;
+  }
+
+  /* o mesmo degrau de 1,15× sobre o `h3` da densidade estreita */
+  .journey__card .ov-card__big {
+    font-size: 0.95rem;
+  }
+
+  /* a trilha encolhe junto: três abas rotuladas não cabem num card estreito */
+  .journey__card .rail {
+    gap: 0.25rem;
+  }
+
+  .journey__card .rail button {
+    flex: 1 1 30%;
+  }
+}
+
+/* ---------- janela baixa: o mesmo card, um degrau de texto abaixo ----------
+
+   O laptop de 1366×768 entrega ~660px de viewport depois do cromo do navegador
+   — menos altura do que a peça mais alta pede (a questão 5 da Parte 2, com
+   4 campos + 5 resultados + dois parágrafos de conclusão, passa de 500px, e a
+   trilha de abas come mais ~50). Aí não é a **largura** que aperta: o
+   `100vh - 9,5rem` já entrega tudo o que a janela tem, e o que falta só sai do
+   texto. Um degrau de 0,82rem para 0,74rem encurta a questão inteira (todos os
+   `rem` fixos da densidade estão declarados, e o resto é herdado), e o
+   `line-height` dos parágrafos de conclusão — que são vários — fecha a conta.
+
+   Vale para qualquer largura: janela baixa é janela baixa no monitor grande
+   também. A folga de 8,5rem mantém 68px livres acima do card, que é a barra
+   fixa de cima. */
+@media (max-height: 780px) {
+  .journey__card-inner {
+    height: min(calc(100vh - 7rem), 40rem);
+    font-size: 0.74rem;
+  }
+
+  /* A etiqueta ("Questão 5 · Inferência para a proporção") repete o que a aba da
+     trilha, logo acima, já diz — e numa janela baixa ela custa uma pílula
+     inteira de altura, que é justamente o que falta. */
+  .journey__card .qcard__tag {
+    display: none;
+  }
+
+  .journey__card .qcard__head h3 {
+    margin-top: 0.15rem;
+  }
+
+  .journey__card .field__label {
+    font-size: 0.66rem;
+  }
+
+  .journey__card .qcard__prompt,
+  .journey__card .ov-card__face p,
+  .journey__card .formula p {
+    line-height: 1.32;
+  }
+
+  .journey__card .qcard__body {
+    gap: 0.3rem;
+  }
+
+  .journey__card .controls {
+    gap: 0.35rem;
+    padding: 0.45rem 0.55rem;
+  }
+
+  .journey__card .results {
+    gap: 0.3rem;
+  }
+
+  .journey__card .mini-chart {
+    height: 44px;
+  }
+}
+
+/* ---------- tela baixa: o card é a tela toda e o texto encolhe ----------
+
+   Um celular deitado, uma janela pequena ou um tablet em paisagem têm altura
+   para menos de um cartão. Aí não é a **largura** que aperta o conteúdo — é a
+   altura — e encolher a tipografia pela largura (o que o `@container` faz) não
+   ajuda: o texto já é o menor que se lê. O que resolve é o contrário: dar a
+   tela inteira ao card e baixar mais um degrau a base do texto.
+
+   Ainda pode sobrar dobra — nesse caso é a rolagem interna, com a barra nos
+   laboratórios e a borda esmaecida nos demais, que assume. O que não pode é o
+   corte mudo. */
+@media (max-width: 768px) and (max-height: 720px) {
+  .journey__card-inner {
+    height: 94vh;
+    font-size: 0.72rem;
+  }
+
+  .journey__card .rail button {
+    min-height: 36px;
+  }
+
+  .journey__card .qcard__prompt,
+  .journey__card .ov-card__face p,
+  .journey__card .formula p {
+    line-height: 1.35;
+  }
+
+  .journey__card .mini-chart {
+    height: 44px;
+  }
+
+  /* Os quatro cards de apresentação também perdem respiro aqui. Antes eles
+     mantinham o padding de tela cheia num card que agora ocupa 94vh da altura —
+     num celular deitado, o cartão da visão geral ficava com o mesmo respiro de
+     um monitor, só que com metade da altura para encher. */
+  .journey__card .qcard__head,
+  .journey__card .qcard__body {
+    padding-block: 0.4rem;
+  }
+
+  .journey__card .qcard__body {
+    padding-inline: 0.55rem;
+    gap: 0.4rem;
+  }
+
+  .journey__card .ov-card,
+  .journey__card .panel,
+  .journey__card .formula {
+    padding: 0.6rem 0.7rem;
+  }
+
+  .journey__card .ov-card {
+    gap: 0.25rem;
+  }
+
+  .journey__card .ov-card__big {
+    font-size: 0.9rem;
   }
 }
 

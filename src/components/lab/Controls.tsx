@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useId, useState, type ReactNode } from 'react';
+import { ChevronDown, ChevronUp, X } from 'lucide-react';
 
 interface SliderProps {
   label: string;
@@ -74,7 +74,7 @@ interface StatProps {
 
 export function Stat({ label, value, hint, highlight }: StatProps) {
   return (
-    <div className={`result${highlight ? ' result--hl' : ''}`}>
+    <div className={`result card-base card-base--sm card-lift${highlight ? ' result--hl' : ''}`}>
       <div className="result__label">{label}</div>
       <div className="result__value">{value}</div>
       {hint && <div className="result__hint">{hint}</div>}
@@ -87,24 +87,67 @@ interface RevealProps {
   answer: ReactNode;
 }
 
+/**
+ * "Ver resolução" — a resolução **cobre** o conteúdo em vez de crescer abaixo.
+ *
+ * ## Por que não abre embaixo
+ *
+ * Aberto no fluxo, o painel empurrava tudo o que vinha depois dele: os
+ * resultados saíam da área visível, o cartão ganhava altura e a leitura da
+ * resolução começava com a pergunta já fora da tela. Pior: num card de altura
+ * travada (`journey__card-inner`) a resolução alongava o conteúdo e o que
+ * aparecia era um corte mudo.
+ *
+ * ## O que ele é agora
+ *
+ * Uma camada por cima do **corpo** do cartão (`position: absolute` contra o
+ * `.qcard__body`): o cabeçalho da questão continua visível acima — quem está
+ * lendo a resolução quase sempre quer reler o enunciado —, o resto do corpo fica
+ * coberto, e nada se desloca. A camada rola por dentro, porque os cinco passos
+ * mais a resposta são mais altos que o corpo numa janela baixa.
+ *
+ * O gatilho some sob a camada, então o fechamento é explícito: o botão do X no
+ * topo do painel. `aria-controls` liga os dois, e `aria-expanded` continua no
+ * gatilho.
+ */
 export function Reveal({ steps, answer }: RevealProps) {
   const [open, setOpen] = useState(false);
+  const panelId = useId();
 
   return (
-    <div>
-      <button className="reveal__toggle" onClick={() => setOpen(!open)} aria-expanded={open}>
-        {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+    <div className="reveal">
+      <button
+        className="reveal__toggle"
+        onClick={() => setOpen((current) => !current)}
+        aria-expanded={open}
+        aria-controls={panelId}
+      >
+        {open ? <ChevronUp size={16} aria-hidden="true" /> : <ChevronDown size={16} aria-hidden="true" />}
         {open ? 'Ocultar resolução' : 'Ver resolução passo a passo'}
       </button>
 
       {open && (
-        <div className="reveal__content">
-          <ol>
-            {steps.map((step, i) => (
-              <li key={i}>{step}</li>
-            ))}
-          </ol>
-          <div className="reveal__answer">{answer}</div>
+        <div id={panelId} className="reveal__panel" role="region" aria-label="Resolução passo a passo">
+          <div className="reveal__panel-head">
+            <span className="reveal__panel-title">Resolução passo a passo</span>
+            <button
+              type="button"
+              className="reveal__close"
+              onClick={() => setOpen(false)}
+              aria-label="Fechar resolução"
+            >
+              <X size={15} aria-hidden="true" />
+            </button>
+          </div>
+
+          <div className="reveal__content">
+            <ol>
+              {steps.map((step, i) => (
+                <li key={i}>{step}</li>
+              ))}
+            </ol>
+            <div className="reveal__answer">{answer}</div>
+          </div>
         </div>
       )}
     </div>

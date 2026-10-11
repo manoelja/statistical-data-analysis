@@ -13,7 +13,7 @@
 
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowUpRight, Github, Linkedin, User } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, Github, Linkedin, User } from 'lucide-react';
 
 /**
  * Os links de saída. **Placeholder** — trocar pelos URLs reais.
@@ -33,11 +33,6 @@ export function Contact() {
 
   return (
     <div className="contact">
-      <p className="contact__lead">
-        A jornada acaba onde a nébulosa acende. Se quiser conferir a conta, seguir o
-        código ou falar comigo, são quatro saídas:
-      </p>
-
       <div className="contact__actions">
         <a
           className="contact__btn"
@@ -63,13 +58,17 @@ export function Contact() {
 
         <button
           type="button"
-          className="contact__btn"
+          className="contact__btn contact__btn--toggle"
           aria-expanded={about}
           aria-controls="contact-sobre"
           onClick={() => setAbout((open) => !open)}
         >
           <User size={17} aria-hidden="true" />
           <span>Sobre o desenvolvedor</span>
+          {/* O único botão que **não** sai da página, e por isso o único que
+              carrega estado: o chevron gira e o botão acende quando a caixa
+              está aberta. Sem isso o estado só existia para o leitor de tela. */}
+          <ChevronDown size={14} aria-hidden="true" className="contact__chevron" />
         </button>
 
         <a
@@ -86,15 +85,17 @@ export function Contact() {
       </div>
 
       {/* a caixa de "sobre": abre **abaixo** do botão, e o botão vira o gatilho
-          (aria-expanded + aria-controls), como o `Reveal` dos laboratórios */}
+          (aria-expanded + aria-controls), como o `Reveal` dos laboratórios. A
+          margem de cima entra na animação junto com a altura: se ficasse só no
+          CSS, o vão embaixo sobreviveria à caixa já fechada. */}
       <AnimatePresence initial={false}>
         {about && (
           <motion.div
             id="contact-sobre"
             className="contact__about"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
+            initial={{ opacity: 0, height: 0, marginTop: 0 }}
+            animate={{ opacity: 1, height: 'auto', marginTop: '0.6rem' }}
+            exit={{ opacity: 0, height: 0, marginTop: 0 }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
           >
             <p>
@@ -103,6 +104,9 @@ export function Contact() {
               disco que vira o universo de dados e o buraco branco do fim são a mesma
               conta ao contrário.
             </p>
+            {/* A origem dos dados, e só ela: e-mail de contato não é publicado
+                aqui — quem quiser falar sai pelo GitHub ou LinkedIn, os botões
+                ao lado. */}
             <p className="contact__about-meta">
               Base: SINASC / DataSUS 2024 · análise conferida no R 4.6.0 ·
             </p>

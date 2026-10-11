@@ -1,4 +1,6 @@
-import { Children, useId, useState, type ReactNode } from 'react';
+import { Children, useCallback, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { useLongPress } from '../../hooks/useLongPress';
 
 export interface LabItem {
   id: string;
@@ -14,29 +16,33 @@ interface LabSectionProps {
   children: ReactNode;
 }
 
+/** controles com ação própria: o clique neles não vira troca de questão */
+const INTERACTIVE =
+  'a[href], button, input, select, textarea, label, [contenteditable="true"], [role="tab"]';
+
 /**
  * Layout dos laboratórios: uma **trilha de estudo** que funciona como abas —
  * uma questão por vez.
  *
- * Antes era uma trilha de navegação que rolava a página até a questão. Dentro
- * do card da jornada isso não pode funcionar: o card tem rolagem própria, o
- * `IntersectionObserver` do `useActiveSection` observa a janela (não o card) e
- * as três questões empilhadas davam um card três vezes mais alto do que a
- * tela. Agora a trilha troca o painel, o card fica do tamanho de uma questão
- * e a rolagem da página volta a ser só a viagem.
- *
  * ## Uma por vez, e como se avança
  *
  * Uma questão de cada vez **já era** o comportamento desde a troca pelas abas:
- * só o painel ativo é montado, e a troupeia de questões não aparece junta. O que
- * faltava era o caminho óbvio para o painel seguinte — com a trilha estreita
- * dentro de um card de 26rem, clicar na aba certa exige mira, e nobody descobre
- * que existem outras questões. `Anterior`/`Próximo` tornam a sequência explícita
- * sem tirar o acesso direto: a trilha continua lá, só que como atalho.
+ * só o painel ativo é montado. O que mudou foi o caminho para a próxima — o
+ * rodapé `Anterior · N de M · Próximo` saiu. Agora clicar no **próprio cartão**
+ * traz a próxima questão, por sobreposição: a que sai desliza e some enquanto a
+ * que entra sobe do fundo, as duas sobrepostas durante a transição. A última dá
+ * a volta para a primeira, e a trilha continua lá como atalho direto.
  *
- * O botão é desabilitado nas pontas em vez de dar a volta: fechar o ciclo faria
- * a última questão trocar pela primeira sem que nada indicasse que a sessão
- * acabou, e o card trocaria de assunto sozinho.
+ * ## Por que só uma é montada
+ *
+ * Uma questão de laboratório publica os próprios parâmetros no estado da cena
+ * 3D (`setSceneParams`). Montar as três juntas faria a cena mostrar uma
+ * distribuição que não é a da questão em tela. Então o painel ativo é o único
+ * montado — e a sobreposição é feita pelo `AnimatePresence`, que segura a
+ * questão que sai só durante a animação (o efeito dela já rodou e não repete).
+ *
+ * O `key` remonta o painel ao trocar de questão: os sliders e os gráficos
+ * recomeçam do estado inicial, em vez de vazar valores da questão anterior.
  */
 export function LabSection({ id, eyebrow, title, intro, items, children }: LabSectionProps) {
   const [activeId, setActiveId] = useState(items[0]?.id ?? '');
@@ -46,15 +52,59 @@ export function LabSection({ id, eyebrow, title, intro, items, children }: LabSe
     0,
     items.findIndex((item) => item.id === activeId),
   );
+  const reduced = useReducedMotion();
+  const deckRef = useRef<HTMLDivElement>(null);
 
-  // o `key` remonta o painel ao trocar de questão: os sliders e os gráficos
-  // recomeçam do estado inicial, em vez de vazar valores da questão anterior
-  const active = panels[index];
+  /** anda `delta` questões, dando a volta na trilha */
+  const step = useCallback(
+    (delta: number) => {
+      setActiveId((current) => {
+        const from = Math.max(
+          0,
+          items.findIndex((item) => item.id === current),
+        );
+        return items[(from + delta + items.length) % items.length]?.id ?? current;
+      });
+    },
+    [items],
+  );
 
-  const step = (delta: number) => {
-    const target = items[index + delta];
-    if (target) setActiveId(target.id);
+  // Toque curto no cartão traz a próxima questão; toque longo fica com a seleção
+  // de texto. Num controle com ação própria (slider, botão), nada acontece.
+  const longPress = useLongPress({
+    onClick: (event) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest?.(INTERACTIVE)) return;
+      step(1);
+      // A moldura é focável, então o clique deixa o foco nela e o card fica
+      // com a borda acesa depois que o dedo sai. Quem chegou por `Tab` não
+      // passa por `pointerup` e continua com o foco e as setas.
+      if (deckRef.current?.contains(document.activeElement)) {
+        (document.activeElement as HTMLElement).blur();
+      }
+    },
+    selectableWithin: '.questions',
+  });
+
+  // As setas só andam a sessão quando o foco está na moldura: com o foco num
+  // slider, as setas são do slider.
+  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.target !== deckRef.current) return;
+    if (
+      event.key === 'Enter' ||
+      event.key === ' ' ||
+      event.key === 'ArrowRight' ||
+      event.key === 'ArrowDown'
+    ) {
+      event.preventDefault();
+      step(1);
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      step(-1);
+    }
   };
+
+  const active = panels[index];
 
   return (
     // o id da etapa vive no marcador da jornada; aqui fica um id próprio do
@@ -88,52 +138,40 @@ export function LabSection({ id, eyebrow, title, intro, items, children }: LabSe
             ))}
           </div>
 
-          {active !== undefined && (
-            <div
-              key={items[index]?.id}
-              id={`${baseId}-painel-${activeId}`}
-              role="tabpanel"
-              aria-labelledby={`${baseId}-tab-${activeId}`}
-              className="questions"
-            >
-              {active}
-            </div>
-          )}
+          <div
+            ref={deckRef}
+            className="questions"
+            role="group"
+            aria-roledescription="pilha de cartões"
+            aria-label={`Questões de ${title}`}
+            tabIndex={items.length > 1 ? 0 : -1}
+            onKeyDown={onKeyDown}
+            {...longPress}
+          >
+            <AnimatePresence initial={false} mode="popLayout">
+              {active !== undefined && (
+                <motion.div
+                  key={items[index]?.id}
+                  id={`${baseId}-painel-${activeId}`}
+                  role="tabpanel"
+                  aria-labelledby={`${baseId}-tab-${activeId}`}
+                  className="questions__card"
+                  initial={reduced ? false : { opacity: 0, scale: 0.96, y: 16 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.98, y: -16 }}
+                  transition={
+                    reduced ? { duration: 0 } : { duration: 0.36, ease: [0.22, 1, 0.36, 1] }
+                  }
+                >
+                  {active}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-          {/* A navegação da sessão: uma questão de cada vez, do começo ao fim,
-              sem sair do capítulo.
-
-              Fica **fora** do painel com `key` de propósito. Dentro dele, cada
-              passo remontaria a navegação junto com a questão — e o botão que o
-              usuário acabou de clicar seria destruído no mesmo instante, o que
-              joga o foco do teclado para o `body` e obriga a voltar com o mouse
-              a cada clique. Fora, os botões sobrevivem ao passo. */}
-          {active !== undefined && (
-            <div className="rail__nav">
-              <button
-                type="button"
-                onClick={() => step(-1)}
-                disabled={index === 0}
-                aria-label="Questão anterior"
-              >
-                Anterior
-              </button>
-              <span className="rail__pos" aria-live="polite">
-                {/* uma interpolação só: `{a} de {b}` deixa três nós de texto
-                    soltos no DOM, e quem procura o contador por texto não
-                    encontra. */}
-                {`${index + 1} de ${items.length}`}
-              </span>
-              <button
-                type="button"
-                onClick={() => step(1)}
-                disabled={index >= panels.length - 1}
-                aria-label="Próxima questão"
-              >
-                Próximo
-              </button>
-            </div>
-          )}
+            <span className="sr-only" aria-live="polite">
+              {`Questão ${index + 1} de ${items.length}`}
+            </span>
+          </div>
         </div>
       </div>
     </section>

@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Copy } from 'lucide-react';
+import { CardDeck } from './CardDeck';
 
 const FORMULAS = [
   { tag: 'Binomial',       expr: 'P(X = k) = C(n,k) · pᵏ · (1 − p)ⁿ⁻ᵏ',   note: 'n provas fixas, dois resultados e probabilidade constante.' },
@@ -82,15 +83,12 @@ export function FormulaSheet() {
           </p>
         </motion.div>
 
-        <div className="formulas" style={{ perspective: '1000px' }}>
-          {FORMULAS.map((f, i) => (
+        {/* A pilha de fórmulas — clicar na carta de cima traz a próxima */}
+        <CardDeck label="Formulário de fórmulas">
+          {FORMULAS.map((f) => (
             <motion.div
               key={f.tag}
-              className="formula formula--3d"
-              initial={{ opacity: 0, rotateY: -18, x: -16 }}
-              whileInView={{ opacity: 1, rotateY: 0, x: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ duration: 0.55, delay: (i % 4) * 0.06, ease: [0.22, 1, 0.36, 1] }}
+              className="formula formula--3d card-base"
               whileHover={{
                 rotateY: 4,
                 rotateX: -3,
@@ -98,8 +96,7 @@ export function FormulaSheet() {
                 scale: 1.02,
                 transition: { duration: 0.3 },
               }}
-              whileTap={{ scale: 0.98 }}
-              style={{ transformStyle: 'preserve-3d', cursor: 'default' }}
+              style={{ transformStyle: 'preserve-3d' }}
             >
               <div className="formula__head">
                 <h4>{f.tag}</h4>
@@ -111,7 +108,7 @@ export function FormulaSheet() {
               <div className="formula__shine" aria-hidden="true" />
             </motion.div>
           ))}
-        </div>
+        </CardDeck>
       </div>
     </section>
   );

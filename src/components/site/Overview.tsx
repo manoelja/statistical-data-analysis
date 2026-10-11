@@ -1,15 +1,27 @@
-/**
- * Overview — seção de visão geral com cards 3D flip interativos.
+﻿/**
+ * Overview — a visão geral da atividade, um cartão por vez.
  *
- * Cada card tem uma face frontal e uma face traseira. No hover/toque,
- * o card gira 180° em Y revelando conteúdo adicional. As entradas da seção
- * usam perspectiva 3D (rotateX de baixo para cima, como páginas de livro).
+ * ## Por que não é mais um card que gira
+ *
+ * Era um card 3D que virava 180° no hover, revelando uma face traseira. Tirou:
+ * passar o mouse numa grade de quatro cards **gira os quatro de uma vez** (o
+ * hover entra e sai conforme o ponteiro atravessa), então nenhuma das faces
+ * ficava legível, e o `aria-pressed` estava num `div` sem papel — quem navega
+ * por teclado nunca girava nada.
+ *
+ * ## A pilha
+ *
+ * Cada cartão é uma peça só, com o conteúdo das duas faces empilhado (a frente
+ * e, abaixo de um fio, o que era o verso). Quem segura a ordem é o `CardDeck`:
+ * aparece um cartão por vez, o próximo já espreita por baixo e clicar na carta
+ * de cima traz o seguinte — sem chip "Próximo" no canto, que era o botão que
+ * este componente carregava antes.
  */
 
-import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Database, Sigma, Microscope, Ruler, BarChart2, FlaskConical } from 'lucide-react';
+import { Database, Sigma, Microscope, Ruler } from 'lucide-react';
 import { dataset } from '../../data/results';
+import { CardDeck } from './CardDeck';
 
 /* ---- Dados dos cards ---- */
 interface CardData {
@@ -25,7 +37,7 @@ function getCards(apgarValidos: number, amostraTotal: number): CardData[] {
     {
       icon: <Database size={20} />,
       title: 'O conjunto de dados',
-      accent: '#4338ca',
+      accent: '#818cf8',
       front: (
         <>
           <p>
@@ -52,7 +64,7 @@ function getCards(apgarValidos: number, amostraTotal: number): CardData[] {
     {
       icon: <Sigma size={20} />,
       title: 'Parte 1 — Probabilidade',
-      accent: '#b45309',
+      accent: '#fbbf24',
       front: (
         <ul className="ov-card__list">
           <li><strong>Binomial</strong>: nº de defeitos em lotes de equipamentos.</li>
@@ -74,7 +86,7 @@ function getCards(apgarValidos: number, amostraTotal: number): CardData[] {
     {
       icon: <Microscope size={20} />,
       title: 'Parte 2 — Inferência',
-      accent: '#0f766e',
+      accent: '#5eead4',
       front: (
         <ul className="ov-card__list">
           <li><strong>Média (APGAR1)</strong>: estimativa, IC 95% com t e teste t.</li>
@@ -96,7 +108,7 @@ function getCards(apgarValidos: number, amostraTotal: number): CardData[] {
     {
       icon: <Ruler size={20} />,
       title: 'Metodologia',
-      accent: '#be123c',
+      accent: '#fda4af',
       front: (
         <ul className="ov-card__list">
           <li>Nível de confiança 95% e significância de 5% na Parte 2.</li>
@@ -121,55 +133,21 @@ function getCards(apgarValidos: number, amostraTotal: number): CardData[] {
   ];
 }
 
-/* ---- Card Flip 3D ---- */
-function FlipCard({ card, index }: { card: CardData; index: number }) {
-  const [flipped, setFlipped] = useState(false);
-
-  const toggle = () => setFlipped(f => !f);
-
+/* ---- o cartão da visão geral ---- */
+function OverviewCard({ card }: { card: CardData }) {
   return (
-    <motion.div
-      className="flip-card"
-      initial={{ opacity: 0, rotateX: -25, y: 30 }}
-      whileInView={{ opacity: 1, rotateX: 0, y: 0 }}
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.6, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
-      style={{ perspective: '900px' }}
-      onHoverStart={toggle}
-      onHoverEnd={toggle}
-      onTap={toggle}
-      aria-pressed={flipped}
+    <article
+      className="ov-card card-base"
+      style={{ ['--ov-accent' as string]: card.accent }}
     >
-      <motion.div
-        className="flip-card__inner"
-        animate={{ rotateY: flipped ? 180 : 0 }}
-        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-        style={{ transformStyle: 'preserve-3d', position: 'relative', height: '100%' }}
-      >
-        {/* Face frontal */}
-        <div
-          className="flip-card__face flip-card__face--front"
-          style={{ borderLeftColor: card.accent }}
-        >
-          <div className="flip-card__icon" style={{ color: card.accent }}>{card.icon}</div>
-          <h3>{card.title}</h3>
-          {card.front}
-          <div className="flip-card__hint">Hover / toque para girar</div>
-        </div>
+      <div className="ov-card__icon">{card.icon}</div>
+      <h3>{card.title}</h3>
 
-        {/* Face traseira */}
-        <div
-          className="flip-card__face flip-card__face--back"
-          style={{ borderLeftColor: card.accent }}
-        >
-          <div className="flip-card__icon" style={{ color: card.accent }}>
-            {index % 2 === 0 ? <BarChart2 size={20} /> : <FlaskConical size={20} />}
-          </div>
-          <h3>{card.title}</h3>
-          {card.back}
-        </div>
-      </motion.div>
-    </motion.div>
+      <div className="ov-card__face">{card.front}</div>
+
+      {/* o que era a face traseira: entra no corpo, separado por um fio */}
+      <div className="ov-card__face ov-card__face--extra">{card.back}</div>
+    </article>
   );
 }
 
@@ -197,12 +175,12 @@ export function Overview() {
           </p>
         </motion.div>
 
-        {/* Grid de cards com flip 3D */}
-        <div className="overview__grid overview__grid--flip">
-          {cards.map((card, i) => (
-            <FlipCard key={card.title} card={card} index={i} />
+        {/* A pilha de cartões da visão geral — um por vez, clicar avança */}
+        <CardDeck label="Visão geral da atividade">
+          {cards.map((card) => (
+            <OverviewCard key={card.title} card={card} />
           ))}
-        </div>
+        </CardDeck>
       </div>
     </section>
   );

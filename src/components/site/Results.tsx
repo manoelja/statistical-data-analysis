@@ -8,6 +8,7 @@
 import { motion } from 'framer-motion';
 import { apgar, dataset, peso } from '../../data/results';
 import { fmt } from '../../lib/stats';
+import { CardDeck } from './CardDeck';
 
 interface IntervalVizProps {
   domain: [number, number];
@@ -52,11 +53,6 @@ function IntervalViz({ domain, range, param, digits }: IntervalVizProps) {
   );
 }
 
-const panelVariants = {
-  hidden: { opacity: 0, rotateX: -16, y: 28 },
-  visible: { opacity: 1, rotateX: 0, y: 0 },
-};
-
 export function Results() {
   return (
     <section className="section results--3d">
@@ -79,27 +75,23 @@ export function Results() {
           </p>
         </motion.div>
 
-        <div className="compare" style={{ perspective: '800px' }}>
+        {/* A pilha de resultados — um painel por vez */}
+        <CardDeck label="Resultados do intervalo de confiança">
           {/* Painel APGAR */}
           <motion.div
-            className="panel panel--3d"
-            style={{ padding: '1.5rem', transformStyle: 'preserve-3d' }}
-            variants={panelVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-40px' }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="panel panel--3d card-base card-base--lg"
+            style={{ transformStyle: 'preserve-3d' }}
             whileHover={{ rotateY: 3, rotateX: -2, translateZ: 10, transition: { duration: 0.3 } }}
           >
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', marginBottom: '0.3rem' }}>
+            <h3 className="panel__title">
               Média do APGAR1
             </h3>
-            <p style={{ color: 'var(--ink-soft)', fontSize: '0.9rem' }}>
+            <p className="panel__body">
               Base completa: {dataset.populacaoLinhas.toLocaleString('pt-BR')} registros, dos quais{' '}
               {dataset.apgarPopulacaoValidos.toLocaleString('pt-BR')} com APGAR1 válido.
             </p>
 
-            <table className="data-table" style={{ marginTop: '1rem' }}>
+            <table className="data-table panel__table">
               <tbody>
                 {[
                   ['Estimativa pontual (x̄)', fmt(apgar.xbar)],
@@ -121,31 +113,26 @@ export function Results() {
               param={apgar.muPopulacao}
               digits={4}
             />
-            <p style={{ marginTop: '0.8rem', color: 'var(--ink-soft)', fontSize: '0.9rem' }}>
+            <p className="panel__note">
               μ = 8,3075 <strong>pertence</strong> ao IC — como esperado em 95% das amostras.
             </p>
           </motion.div>
 
           {/* Painel Proporção */}
           <motion.div
-            className="panel panel--3d"
-            style={{ padding: '1.5rem', transformStyle: 'preserve-3d' }}
-            variants={panelVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-40px' }}
-            transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="panel panel--3d card-base card-base--lg"
+            style={{ transformStyle: 'preserve-3d' }}
             whileHover={{ rotateY: -3, rotateX: -2, translateZ: 10, transition: { duration: 0.3 } }}
           >
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', marginBottom: '0.3rem' }}>
+            <h3 className="panel__title">
               Proporção com peso ≥ 2.500 g
             </h3>
-            <p style={{ color: 'var(--ink-soft)', fontSize: '0.9rem' }}>
+            <p className="panel__body">
               Base completa: {dataset.pesoPopulacaoValidos.toLocaleString('pt-BR')} registros com
               informação de peso. Baixo peso na população: {fmt(peso.baixoPesoPopulacao * 100, 2)}%.
             </p>
 
-            <table className="data-table" style={{ marginTop: '1rem' }}>
+            <table className="data-table panel__table">
               <tbody>
                 {[
                   ['Estimativa pontual (p̂)',    fmt(peso.phat)],
@@ -167,11 +154,11 @@ export function Results() {
               param={peso.populacao}
               digits={4}
             />
-            <p style={{ marginTop: '0.8rem', color: 'var(--ink-soft)', fontSize: '0.9rem' }}>
+            <p className="panel__note">
               p = 0,9052 também <strong>pertence</strong> ao IC amostral.
             </p>
           </motion.div>
-        </div>
+        </CardDeck>
       </div>
     </section>
   );

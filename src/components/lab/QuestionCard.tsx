@@ -10,7 +10,7 @@ interface QuestionCardProps {
 
 export function QuestionCard({ id, tag, title, prompt, children }: QuestionCardProps) {
   return (
-    <article className="qcard" id={id}>
+    <article className="qcard card-base card-base--flush card-lift" id={id}>
       <div className="qcard__head">
         <span className="qcard__tag">{tag}</span>
         <h3>{title}</h3>

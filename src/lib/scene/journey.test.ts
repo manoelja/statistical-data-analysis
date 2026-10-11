@@ -331,6 +331,19 @@ describe('journey — etapas e cards', () => {
         expect(after.opacity).toBe(0);
         expect(Math.abs(after.shift)).toBeGreaterThan(10);
       }
+
+      // **Escala inteira sempre que o card se lê.** Escala fracionária faz o
+      // navegador rasterizar o texto numa escala não inteira e a letra sai
+      // macia — e vale para o card inteiro, não só para o que está entrando.
+      // A escala só pode crescer junto com o fade, nunca enquanto ele é lido.
+      const samples = 60;
+      for (let i = 0; i <= samples; i++) {
+        const at = chapter.enter + ((chapter.exit - chapter.enter) * i) / samples;
+        const pose = cardPose(index, at);
+        if (pose.opacity > 0.999) {
+          expect(pose.scale).toBe(1);
+        }
+      }
     });
 
     // quem entra depois ainda está fora, deslizando

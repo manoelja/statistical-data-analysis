@@ -1,42 +1,98 @@
-/* ============================================================
-   Probabilidade & InferÃªncia EstatÃ­stica â€” tema "caderno cientÃ­fico"
-   Tema escuro Ãºnico: a pÃ¡gina Ã© o espaÃ§o da jornada (ardÃ³sia + giz aceso).
+﻿/* ============================================================
+   Probabilidade & Inferência Estatística — tema "vidro no espaço"
+   Tema escuro único: a página é o espaço da jornada. O card não é papel
+   colado na tela — é vidro, e a peça 3D continua legível por trás dele.
    ============================================================ */
 
 :root {
-  --paper: #14131a;
-  --paper-raised: #1c1b24;
-  --ink: #f4f1ea;
-  --ink-soft: #b9b3a6;
-  --ink-faint: #837c6e;
-  --rule: rgba(244, 241, 234, 0.16);
-  --rule-strong: rgba(244, 241, 234, 0.32);
+  /* O fundo é mais frio e mais fundo que a ardósia que era: o negro do
+     corredor, não o papel de um caderno. */
+  --paper: #0b0d14;
+  /* Superfície **opaca** — a que recebe conteúdo digitado, onde o que está
+     atrás é ruído. Input de número, botão, aba: aqui a translucidez só
+     atrapalharia a leitura do que está sendo escrito. */
+  --paper-raised: #141824;
+/* A superfície do card é outra coisa: `rgba` de propósito. A peça 3D mora
+     logo atrás do card, e um papel opaco virava uma placa cobrindo a obra.
+     Os 74% substituem o desfoque: sem `backdrop-filter` (ver `.card-base`,
+     que explica por quê) é esta opacidade que segura o contraste do texto. */
+  --glass: rgba(20, 26, 44, 0.74);
+
+  /* Tinta fria. O creme (`#f4f1ea`) é a cor do giz, e era ele — mais que
+     qualquer outro token — que fazia a página inteira ler como quadro-negro. */
+  --ink: #eef1f8;
+  --ink-soft: #aab3c7;
+  /* 6:1 sobre o vidro efetivo. O rótulo do resultado usa esta cor e é o texto
+     mais miúdo da página (0,58rem dentro do card). */
+  --ink-faint: #8791a8;
+  /* As regras acompanham a tinta: brancas frias, não creme. */
+  --rule: rgba(214, 226, 255, 0.14);
+  --rule-strong: rgba(214, 226, 255, 0.26);
+  /* a borda do vidro é o que o captura da luz atrás */
+  --glass-edge: rgba(198, 214, 255, 0.18);
 
   --accent: #a5b4fc;
-  --accent-soft: rgba(165, 180, 252, 0.14);
+  --accent-soft: rgba(165, 180, 252, 0.16);
   --accent-deep: #c7d2fe;
   --gold: #fbbf24;
-  --gold-soft: rgba(251, 191, 36, 0.14);
+  --gold-soft: rgba(251, 191, 36, 0.16);
   --teal: #5eead4;
   --rose: #fda4af;
 
-  --shadow-sm: 1px 1px 0 rgba(0, 0, 0, 0.6);
-  --shadow-card: 4px 4px 0 rgba(0, 0, 0, 0.35);
-  --shadow-lift: 6px 6px 0 rgba(165, 180, 252, 0.24);
+  /* A sombra deixa de ser deslocamento duro de estêncil e vira profundidade:
+     o card flutua em vez de estar recortado. O `lift` acrescenta o anel
+     luminoso — é ele que diz "levantado" sem precisar de deslocamento. */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 8px 28px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-lift: 0 16px 44px rgba(0, 0, 0, 0.5),
+    0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent);
 
   --radius-sm: 6px;
   --radius-md: 12px;
   --radius-lg: 18px;
   --radius-pill: 999px;
 
-  /* Letras estilo giz (mesma fonte das fÃ³rmulas do quadro de fundo). */
-  --font-chalk: 'Patrick Hand', 'Segoe Print', 'Comic Sans MS', cursive;
-  --font-display: var(--font-chalk);
+  /* Padding por tamanho de card. Antes cada card tinha o seu número solto
+     (1rem, 1.25rem, 1.4rem, 1.5rem, 1.8rem), então dois cards vizinhos nunca
+     casavam. O tamanho do card é a chave: `-sm` para o número solto, o
+     padrão para o card de conteúdo, `-lg` para o card que é uma seção. */
+  --card-pad: 1.25rem 1.35rem;
+  --card-pad-sm: 0.85rem 0.95rem;
+  --card-pad-lg: 1.5rem 1.6rem;
+
+  /* Títulos. Serifa de peso real (400–800, contínuo) e de tamanho óptico: o
+     display de mão tem um peso só, e todo `font-weight: 600` nele virava
+     negrito sintético — o navegador borra o contorno e fecha os contrários,
+     que é o que fazia os títulos grandes (as placas do prólogo e do epílogo)
+     virarem uma mancha branca. Fraunces também já era pedida no `index.html`;
+     agora ela é usada. */
+  --font-display: 'Fraunces', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+  /* A voz do **título da página** — a placa do prólogo e do epílogo. A marca da
+     barra não entra aqui: ela é a *palavra* do projeto e usa a fonte do texto
+     (ver `.brand`), como o logo do `r-introduction` usa a fonte da página dele.
+
+     O `opsz` fixo é o detalhe que importa: Fraunces é variável no eixo óptico
+     (9–144) e o navegador escolhe esse corte sozinho, pelo `font-size`. Sem o
+     eixo fixado, o mesmo texto sai com duas formas diferentes conforme o corpo —
+     e é isso que fazia "a mesma fonte" parecer outra. */
+  --title-weight: 600;
+  --title-tracking: -0.02em;
+  --title-opsz: 32;
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
 
+  /* Etiqueta de dado: monoespaçada em caixa alta. Continua — é convenção de
+     dado, não de giz. O que sai é o tracking largo, que era o que fazia a
+     palavra parecer escrita à mão entre letras soltas. */
+  --label-tracking: 0.07em;
+
   --nav-h: 68px;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Ponteiro próprio: a **estrela**, de cinco pontas vivas. Os dois números
+     depois do `url()` são o ponto ativo — a ponta de cima —, e o `auto` no fim é
+     a rede: sem a imagem, o cursor do sistema entra no lugar. */
+  --cursor-star: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M16 9L17.7 13.7 22.7 13.8 18.7 16.9 20.1 21.7 16 18.9 11.9 21.7 13.3 16.9 9.3 13.8 14.3 13.7Z' fill='%23eef1f8' stroke='%230b0d14' stroke-width='1'/%3E%3C/svg%3E") 16 7, auto;
 }
 
 * {
@@ -46,8 +102,36 @@
 }
 
 *:focus-visible {
-  outline: 2px dashed var(--accent);
+  outline: 2px solid var(--accent);
   outline-offset: 3px;
+}
+
+/* ---------- o ponteiro ----------
+
+   Um cursor próprio no lugar do do sistema: a **estrela**, e ela é a mesma na
+   página inteira — inclusive sobre o que é clicável. Não há troca de cursor no
+   hover: quem diz que a peça responde é a própria peça (a borda que acende, a
+   carta que levanta).
+
+   O desenho é um SVG em `data:` (mesma técnica do grão do fundo e das setas do
+   seletor), em **32×32** porque é o teto que Chrome e Edge aceitam: acima disso
+   o cursor de imagem é *ignorado* e o do sistema volta sem avisar. A estrela é
+   **pequena de propósito** — desenha ~16px dentro da caixa, o corpo de um
+   ponteiro de verdade — e tem as pontas **vivas**: cinco, com o
+   `stroke-linejoin: miter` de sempre, no lugar das pontas arredondadas que ela
+   tinha. O par de números depois do `url()`, definido em `:root`, é o ponto
+   ativo — o clique cai onde o desenho aponta.
+
+   As regras de elemento abaixo não servem para repintar o que já é herdado de
+   `html`: servem para a estrela **chegar** ali. Botão, polegar de slider e
+   seletor de passo do campo numérico são desenhados com o cursor da tabela do
+   navegador, e uma declaração da UA vence o que é herdado. */
+html,
+a,
+label,
+summary,
+[role='button'] {
+  cursor: var(--cursor-star);
 }
 
 html {
@@ -71,12 +155,18 @@ a {
 
 button {
    font-family: inherit;
-   cursor: pointer;
+   cursor: var(--cursor-star);
  }
  
- /* Sem flash de destaque ao clicar/tocar (mobile) */
+ /* Sem flash de destaque ao clicar/tocar (mobile). A lista tinha só `a` e
+    `button`, e os cards são `div`: o navegador pintava o **próprio realce
+    azul** no ponto exato do toque, dentro do card. A propriedade é herdada,
+    então marcá-la no topo do card (`.deck`) e na superfície comum
+    (`.card-base`) cobre o card inteiro, filhos inclusive. */
  a,
- button {
+ button,
+ .deck,
+ .card-base {
    -webkit-tap-highlight-color: transparent;
  }
 
@@ -107,7 +197,7 @@ ul {
   font-family: var(--font-mono);
   font-size: 0.72rem;
   font-weight: 500;
-  letter-spacing: 0.16em;
+  letter-spacing: var(--label-tracking);
   text-transform: uppercase;
   color: var(--accent);
   background: var(--accent-soft);
@@ -136,11 +226,37 @@ ul {
 }
 
 /* ---------- generic card ---------- */
+/* `.panel` é só o raio grande: o resto da superfície vem de `.card-base`. */
 .panel {
-  background: var(--paper-raised);
-  border: 1px solid var(--rule-strong);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
+}
+
+/* Estas quatro regras eram `style={{}}` inline nos dois painéis de `Results`.
+   Inline ganha de qualquer seletor de classe, então a densidade do card da
+   jornada (`journey.css`) só podia alcançá-las com `!important`. Como regra, a
+   especificidade deixa o card mandar. */
+.panel__title {
+  font-family: var(--font-display);
+  /* 600 explícito: sem isto o `h3` traz o 700 do navegador e este título fica
+     mais pesado que todos os outros da página */
+  font-weight: 600;
+  font-size: 1.25rem;
+  margin-bottom: 0.3rem;
+}
+
+.panel__body {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.panel__table {
+  margin-top: 1rem;
+}
+
+.panel__note {
+  margin-top: 0.8rem;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
 }
 
 /* ---------- buttons ---------- */
@@ -160,13 +276,13 @@ ul {
 }
 
 .btn:hover {
-  transform: translate(-2px, -2px);
+  transform: translate(-2px, -2px) scale(1.02);
   box-shadow: var(--shadow-lift);
 }
 
 .btn--primary {
   background: var(--accent);
-  color: #14131a;
+  color: var(--paper);
   border-color: var(--accent);
 }
 
@@ -175,6 +291,18 @@ ul {
 }
 
 /* ---------- navbar ---------- */
+/* A barra **não tem superfície nenhuma**, nem grudada. Antes ela virava uma
+   placa de papel a 88% assim que a rolagem passava de 24px, e o resultado era
+   uma faixa opaca cortando a nebulosa ao meio — a obra aparecia exatamente
+   onde ela mais importa. O que segura a leitura da marca e dos links não é o
+   papel, e sim o **halo**: é o mesmo instrumento do card da jornada
+   (`text-shadow` em `.journey__card-inner`), e pelo mesmo motivo — a nebulosa
+   é brilhante e de cor variável, então um fundo fixo só acendia ou apagava
+   conforme a parte do gás que passasse atrás.
+
+   Nada marca o rodapé dela: nem papel, nem fio. Um separador ali seria uma linha
+   reta opaca cortando a nebulosa ao meio — a mesma conta da placa que foi
+   removida, só que em 1px. E não falta nada: o halo já diz onde a barra está. */
 .navbar {
   position: fixed;
   inset: 0 0 auto 0;
@@ -182,14 +310,13 @@ ul {
   z-index: 60;
   display: flex;
   align-items: center;
-  transition: background 0.3s var(--ease), border-color 0.3s var(--ease);
-  border-bottom: 1px solid transparent;
 }
 
-.navbar.is-stuck {
-  background: color-mix(in srgb, var(--paper) 88%, transparent);
-  backdrop-filter: blur(12px);
-  border-bottom-color: var(--rule);
+.navbar .brand,
+.navbar__links a {
+  text-shadow:
+    0 1px 3px color-mix(in srgb, var(--paper) 82%, transparent),
+    0 2px 14px color-mix(in srgb, var(--paper) 60%, transparent);
 }
 
 .navbar__inner {
@@ -202,10 +329,15 @@ ul {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.02rem;
-  letter-spacing: -0.01em;
+  /* A marca usa a fonte do **texto da página**, não a dos títulos — é o mesmo
+     desenho do logo do `r-introduction`, que é a fonte da página dele em peso
+     alto. Motivo: wordmark em corpo, títulos em display. Com a serifa aqui a
+     barra tinha dois displays brigando (a marca e a placa logo abaixo), e a
+     marca ainda "parecia" um título mesmo sem ser um. */
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: -0.005em;
 }
 
 .brand__mark {
@@ -285,7 +417,12 @@ ul {
   position: fixed;
   inset: var(--nav-h) 0 0 0;
   z-index: 55;
-  background: var(--paper);
+  /* A gaveta é a **exceção** à barra sem superfície: ela precisa de uma, porque
+     cobre a página inteira e os links precisam de fundo para não se misturarem
+     ao quadro 3D. Papel em 82% e desfoque fecham essa conta. */
+  background: color-mix(in srgb, var(--paper) 82%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
@@ -296,7 +433,7 @@ ul {
   font-family: var(--font-display);
   font-size: 1.4rem;
   padding: 0.7rem 0.25rem;
-  border-bottom: 1px dashed var(--rule);
+  border-bottom: 1px solid var(--rule);
 }
 
 /* ---------- hero ---------- */
@@ -344,91 +481,116 @@ ul {
   gap: 0.9rem;
 }
 
-.stat {
-  background: var(--paper-raised);
-  border: 1px solid var(--rule-strong);
-  border-radius: var(--radius-md);
-  padding: 1rem 1.1rem;
-  box-shadow: var(--shadow-card);
-}
+/* ---------- pilha de cartões (CardDeck) ---------- */
 
-.stat__label {
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
-
-.stat__value {
-  font-family: var(--font-mono);
-  font-size: 1.5rem;
-  font-weight: 500;
-  color: var(--ink);
-  line-height: 1.2;
-  margin-top: 0.35rem;
-}
-
-.stat__value small {
-  font-size: 0.72rem;
-  color: var(--ink-faint);
-  margin-left: 0.2rem;
-}
-
-/* ---------- overview ---------- */
-.overview__grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.25rem;
-}
-
-.card {
-  background: var(--paper-raised);
-  border: 1px solid var(--rule-strong);
-  border-left: 4px solid var(--accent);
-  border-radius: var(--radius-md);
-  padding: 1.4rem 1.5rem;
-  box-shadow: var(--shadow-card);
-}
-
-.card--gold {
-  border-left-color: var(--gold);
-}
-
-.card--teal {
-  border-left-color: var(--teal);
-}
-
-.card h3 {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.2rem;
-  margin-bottom: 0.5rem;
-}
-
-.card p {
-  color: var(--ink-soft);
-  font-size: 0.95rem;
-}
-
-.card ul {
-  margin-top: 0.6rem;
-  display: grid;
-  gap: 0.35rem;
-}
-
-.card li {
-  font-size: 0.92rem;
-  color: var(--ink-soft);
-  padding-left: 1.1rem;
+/*
+ * A pilha: uma carta por vez, no mesmo lugar. Clicar a transforma na próxima —
+ * as duas se sobrepõem durante a animação (ver `CardDeck.tsx`). Sem botão e sem
+ * cartas espiando atrás, então nada de faixa reservada no rodapé.
+ */
+.deck {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
 }
 
-.card li::before {
-  content: 'â–¸';
+.deck:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: var(--radius-md);
+}
+
+.deck__stack {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ---------- a régua da pilha ----------
+
+   A barra de acento do `.card-base` é estado (acende ao apontar, focar ou
+   tocar) e nada mais: não é contador. A pilha mostra uma carta por vez, e a
+   posição é anunciada no leitor de tela — um filete de 3px no topo seria
+   enfeite ocupando o lugar de conteúdo. */
+
+/* A carta inteira é o alvo: sem isto o cursor não muda e o clique parece não
+   fazer nada até a carta já ter virado. */
+.deck:not([data-count='1']) .deck__card {
+  cursor: var(--cursor-star);
+}
+
+.deck__card {
   position: absolute;
-  left: 0;
-  color: var(--accent);
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-radius: var(--radius-md);
+  /* alvo de toque de ponta a ponta: o toque longo vira seleção de texto, então
+     `.selectable` devolve a cópia durante o toque (ver `useLongPress`) */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Aviso de que a peça continua: barra de rolagem, e não borda esmaecida.
+   A máscara ficava melhor na teoria — esmaece o pixel, não cobre nada —, mas
+   `mask` no ancestral torna qualquer coisa com `backdrop-filter` dentro um
+   backdrop root, e aqui ela já era o que quebrava o vidro do card. Um filete de
+   8px numa canaleta transparente não tem efeito colateral nenhum e diz
+   exatamente onde há mais. Mesma regra das `.questions`, para os dois tipos de
+   card rolável lerem igual. */
+.deck__card::-webkit-scrollbar {
+  width: 8px;
+}
+
+.deck__card::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.deck__card::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: var(--radius-pill);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .deck__card {
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) transparent;
+  }
+}
+
+/* Centraliza a peça. `margin-block: auto` (e não `justify-content`) porque uma
+   peça mais alta que a janela não pode ter o topo cortado para sempre: com o
+   `auto`, a margem vira 0 e o excesso rola. */
+.deck__card > * {
+  width: 100%;
+  margin-block: auto;
+  flex: none;
+}
+
+.deck__card.selectable {
+  user-select: auto;
+  -webkit-user-select: auto;
+  -webkit-touch-callout: default;
+}
+
+/* ---------- visível só para leitores de tela ---------- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
 .data-table {
@@ -441,7 +603,7 @@ ul {
 .data-table td {
   text-align: left;
   padding: 0.6rem 0.75rem;
-  border-bottom: 1px dashed var(--rule);
+  border-bottom: 1px solid var(--rule);
 }
 
 .data-table th {
@@ -456,7 +618,7 @@ ul {
   font-family: var(--font-mono);
 }
 
-/* ---------- lab (trilha + questÃµes) ---------- */
+/* ---------- lab (trilha + questões) ---------- */
 .lab__layout {
   display: grid;
   grid-template-columns: 250px minmax(0, 1fr);
@@ -476,7 +638,7 @@ ul {
 .rail__title {
   font-family: var(--font-mono);
   font-size: 0.66rem;
-  letter-spacing: 0.14em;
+  letter-spacing: var(--label-tracking);
   text-transform: uppercase;
   color: var(--ink-faint);
   margin-bottom: 0.5rem;
@@ -520,20 +682,27 @@ ul {
 
 .rail button.active .rail__num {
   background: var(--accent);
-  color: #14131a;
+  color: var(--paper);
   border-color: var(--accent);
 }
 
 .questions {
+  position: relative;
   display: grid;
   gap: 1.75rem;
 }
 
+.questions__card {
+  min-width: 0;
+}
+
 .qcard {
-  background: var(--paper-raised);
-  border: 1px solid var(--rule-strong);
+  /* `.card-base` dá o papel, a borda, a sombra e a barra de acento; o raio
+     fica grande aqui e no `overflow` porque o card é um contêiner de seção
+     (como `.panel`), não uma peça de conteúdo. O `overflow` recorta o
+     `::before` da base pelo raio. O padding é dos filhos (head e body),
+     daí o `--flush`. */
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
   overflow: hidden;
   scroll-margin-top: calc(var(--nav-h) + 24px);
 }
@@ -548,7 +717,7 @@ ul {
   gap: 0.45rem;
   font-family: var(--font-mono);
   font-size: 0.68rem;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--label-tracking);
   text-transform: uppercase;
   color: var(--gold);
   background: var(--gold-soft);
@@ -582,6 +751,10 @@ ul {
   padding: 1.3rem 1.6rem 1.6rem;
   display: grid;
   gap: 1.25rem;
+  /* Âncora do painel de resolução (`.reveal__panel`): ele cobre **este** corpo,
+     e não o cartão inteiro — assim o enunciado da questão continua visível
+     enquanto a resolução está aberta. */
+  position: relative;
 }
 
 /* ---------- controls ---------- */
@@ -590,7 +763,7 @@ ul {
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 1rem;
   background: var(--accent-soft);
-  border: 1px dashed var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
   border-radius: var(--radius-md);
   padding: 1.1rem 1.2rem;
 }
@@ -642,7 +815,7 @@ input[type='range']::-webkit-slider-thumb {
   background: var(--accent);
   border: 2px solid var(--paper-raised);
   box-shadow: 0 0 0 1px var(--accent);
-  cursor: grab;
+  cursor: var(--cursor-star);
   transition: transform 0.15s var(--ease);
 }
 
@@ -657,11 +830,15 @@ input[type='range']::-moz-range-thumb {
   background: var(--accent);
   border: 2px solid var(--paper-raised);
   box-shadow: 0 0 0 1px var(--accent);
-  cursor: grab;
+  cursor: var(--cursor-star);
 }
 
 .num-input {
   width: 100%;
+  /* Campo de texto: aqui o cursor continua sendo o do sistema — a barra que
+     pisca entre as letras é a que diz "escreve aqui" (o **seletor** do campo é
+     que vira garra, ver acima). */
+  cursor: text;
   font-family: var(--font-mono);
   font-size: 0.88rem;
   padding: 0.45rem 0.6rem;
@@ -669,6 +846,57 @@ input[type='range']::-moz-range-thumb {
   border: 1px solid var(--rule-strong);
   background: var(--paper-raised);
   color: var(--ink);
+}
+
+/* ---------- o seletor de passo do campo numérico ----------
+
+   O `input[type=number]` traz o próprio seletor, e o Chrome/Edge o desenham como
+   uma **caixinha clara com dois triângulos cinza** — num card escuro ela é o
+   único ponto branco, colada na borda do campo. Como o desenho é do navegador, o
+   `-webkit-appearance` é desligado e o lugar dele passa a ser ocupado por um
+   botão do tema: pílula no tom da superfície e as duas setas em `--ink-soft`, que
+   acendem em `--accent` quando o campo é apontado ou focado.
+
+   As setas são um SVG em `data:` (mesma técnica do grão do fundo), **um desenho
+   por estado**: `currentColor` não atravessa um `data:`, então a cor tem de estar
+   no próprio SVG. O que **não** muda é o alvo: o botão continua sendo o do
+   navegador naquele lugar, metade de cima soma um passo e metade de baixo
+   subtrai — só o desenho é nosso. */
+.num-input::-webkit-inner-spin-button,
+.num-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 0.9rem;
+  height: 1.15rem;
+  /* a folga é o que separa o seletor do número, que ficava colado nele */
+  margin-inline-start: 0.3rem;
+  border-radius: var(--radius-sm);
+  background-color: color-mix(in srgb, var(--ink) 8%, transparent);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='16' viewBox='0 0 10 16'%3E%3Cpath fill='%23aab3c7' d='M5 3 8 7.2H2z'/%3E%3Cpath fill='%23aab3c7' d='M5 13 2 8.8h6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 0.5rem auto;
+  cursor: var(--cursor-star);
+  transition: background-color 0.18s var(--ease);
+}
+
+.num-input:hover::-webkit-inner-spin-button,
+.num-input:hover::-webkit-outer-spin-button,
+.num-input:focus::-webkit-inner-spin-button,
+.num-input:focus::-webkit-outer-spin-button {
+  background-color: var(--accent-soft);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='16' viewBox='0 0 10 16'%3E%3Cpath fill='%23a5b4fc' d='M5 3 8 7.2H2z'/%3E%3Cpath fill='%23a5b4fc' d='M5 13 2 8.8h6z'/%3E%3C/svg%3E");
+}
+
+/* Firefox desenha os passos por conta própria e não dá gancho para estilizá-los
+   (os `::-moz-number-spin-*` não são padrão e variam por versão). Lá o campo
+   volta a ser um campo de texto: o passo continua no teclado e na roda, com o
+   campo focado. */
+@supports not selector(::-webkit-inner-spin-button) {
+  .num-input {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
 }
 
 /* ---------- results ---------- */
@@ -679,12 +907,8 @@ input[type='range']::-moz-range-thumb {
 }
 
 .result {
-  border: 1px solid var(--rule-strong);
-  border-radius: var(--radius-md);
-  padding: 0.85rem 0.95rem;
-  background: var(--paper-raised);
+  /* fundo, borda, raio, sombra e padding vêm de `.card-base` */
   position: relative;
-  overflow: hidden;
 }
 
 .result--hl {
@@ -713,7 +937,72 @@ input[type='range']::-moz-range-thumb {
   margin-top: 0.15rem;
 }
 
-/* ---------- reveal (ver resoluÃ§Ã£o) ---------- */
+/* ---------- reveal (ver resolução) ----------
+
+   O painel **cobre** o corpo do cartão em vez de empurrá-lo. Antes ele entrava
+   no fluxo (`margin-top` + fio de separação) e abrir a resolução empurrava os
+   resultados para fora da área visível — dentro de um card de altura travada,
+   isso virava conteúdo cortado. Agora é `position: absolute` contra o
+   `.qcard__body` (por isso o `position: relative` lá), com rolagem própria.
+
+   O `inset` de cima não é zero de propósito: o corpo tem o padding de topo
+   desenhado para separar a primeira peça do enunciado, e é nesse vão que a
+   camada começa, para não encostar na última linha do cabeçalho. Os cantos de
+   baixo ficam retos porque a camada vai até a base do cartão, que já recorta o
+   raio por conta própria (`overflow: hidden` do `.qcard`). */
+.reveal__panel {
+  position: absolute;
+  inset: 0.7rem 0 0 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem 1rem;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  /* superfície **opaca**: a resolução é texto corrido sobre o que estava atrás,
+     e o vidro do card só atrapalharia a leitura */
+  background: var(--paper-raised);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.reveal__panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex: none;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.reveal__panel-title {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.reveal__close {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--rule-strong);
+  background: var(--paper);
+  color: var(--ink-soft);
+  transition: color 0.18s var(--ease), border-color 0.18s var(--ease);
+}
+
+.reveal__close:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
 .reveal__toggle {
   display: inline-flex;
   align-items: center;
@@ -726,13 +1015,17 @@ input[type='range']::-moz-range-thumb {
   padding: 0;
 }
 
+/* A rolagem é do **conteúdo**, não da camada: assim o cabeçalho do painel (com
+   o X) fica parado no topo enquanto os passos rolam. */
 .reveal__content {
-  margin-top: 0.9rem;
-  border-top: 1px dashed var(--rule);
-  padding-top: 0.9rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   font-size: 0.92rem;
   color: var(--ink-soft);
   display: grid;
+  align-content: start;
   gap: 0.6rem;
 }
 
@@ -766,7 +1059,7 @@ input[type='range']::-moz-range-thumb {
   white-space: nowrap;
 }
 
-/* ---------- mini chart (distribuiÃ§Ã£o) ---------- */
+/* ---------- mini chart (distribuição) ---------- */
 .mini-chart {
   display: flex;
   align-items: flex-end;
@@ -802,12 +1095,6 @@ input[type='range']::-moz-range-thumb {
 }
 
 /* ---------- results section ---------- */
-.compare {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.25rem;
-}
-
 .interval-viz {
   margin-top: 1.1rem;
 }
@@ -848,18 +1135,10 @@ input[type='range']::-moz-range-thumb {
 }
 
 /* ---------- formula sheet ---------- */
-.formulas {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-}
-
 .formula {
-  border: 1px solid var(--rule-strong);
-  border-radius: var(--radius-md);
+  /* fundo, borda, raio e sombra vêm de `.card-base`; só o padding muda,
+     porque o card de fórmula é mais apertado que o padrão */
   padding: 1.1rem 1.2rem;
-  background: var(--paper-raised);
-  box-shadow: var(--shadow-card);
 }
 
 .formula__head {
@@ -873,7 +1152,7 @@ input[type='range']::-moz-range-thumb {
 .formula h4 {
   font-family: var(--font-mono);
   font-size: 0.72rem;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--label-tracking);
   text-transform: uppercase;
   color: var(--gold);
   margin-bottom: 0;
@@ -914,7 +1193,7 @@ input[type='range']::-moz-range-thumb {
   font-family: var(--font-mono);
   font-size: 0.95rem;
   background: var(--paper);
-  border: 1px dashed var(--rule);
+  border: 1px solid var(--rule);
   border-radius: var(--radius-sm);
   padding: 0.6rem 0.7rem;
   color: var(--ink);
@@ -967,9 +1246,7 @@ input[type='range']::-moz-range-thumb {
 
 /* ---------- responsive ---------- */
 @media (max-width: 960px) {
-  .hero__grid,
-  .overview__grid,
-  .compare {
+  .hero__grid {
     grid-template-columns: 1fr;
   }
 
@@ -982,7 +1259,7 @@ input[type='range']::-moz-range-thumb {
     display: flex;
     flex-wrap: wrap;
     border-left: 0;
-    border-bottom: 1px dashed var(--rule);
+    border-bottom: 1px solid var(--rule);
     padding: 0 0 0.9rem;
     margin-bottom: 0.5rem;
   }
@@ -993,12 +1270,37 @@ input[type='range']::-moz-range-thumb {
 }
 
 @media (max-width: 720px) {
+  :root {
+    --card-pad: 1rem 1.1rem;
+    --card-pad-sm: 0.75rem 0.85rem;
+    --card-pad-lg: 1.25rem 1.3rem;
+  }
+
   .navbar__links {
     display: none;
   }
 
   .navbar__mobile-toggle {
     display: grid;
+  }
+
+  /* O botão vai para o canto. A barra herdava a largura do `.container`
+     (`100% - 2.5rem`), que no celular empurrava a marca e o menu 1,25rem das
+     bordas; aqui a barra usa a tela inteira com um respiro curto e o hambúrguer
+     encosta no canto de verdade — como no navbar do `r-introduction`.
+
+     O empurrão é do próprio botão: quem fazia isso era o `margin-left: auto` dos
+     `.navbar__links`, e com eles em `display: none` não sobrava nada — o
+     hambúrguer ficava colado na marca, a 1,5rem de `gap` do lugar certo. */
+  .navbar__inner {
+    width: 100%;
+    padding-inline: 0.7rem;
+  }
+
+  .navbar__mobile-toggle {
+    margin-left: auto;
+    width: 44px;
+    height: 44px;
   }
 
   .section {
@@ -1014,36 +1316,34 @@ input[type='range']::-moz-range-thumb {
   }
 }
 
+/* Um único corte de movimento para a página inteira. Este bloco generaliza o
+   que antes estava repetido em duas cópias idênticas daqui e em outro no fim
+   do arquivo — e é ele que garante que nenhum card levante com o
+   reduced-motion ligado. */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
 
-  * {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  * {
+  *,
+  *::before,
+  *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
   }
 }
 
 /* ============================================================
-   Polimento visual â€” inspirado no tema "cyber" de r-introduction
+   Polimento visual — inspirado no tema "cyber" de r-introduction
    ============================================================ */
 
 /* 1. Fundo com os gradientes do tema (grade removida a pedido) */
+/* O papel ficou mais escuro, então as manchas de luz sobem de 8%/6% para
+   12%/9% — é o mesmo brilho, sobre um fundo que precisa mais de ajuda. */
 body {
   background-image:
-    radial-gradient(circle at 15% 10%, rgba(165, 180, 252, 0.08), transparent 45%),
-    radial-gradient(circle at 85% 0%, rgba(251, 191, 36, 0.06), transparent 40%);
+    radial-gradient(circle at 15% 10%, rgba(165, 180, 252, 0.12), transparent 45%),
+    radial-gradient(circle at 85% 0%, rgba(251, 191, 36, 0.09), transparent 40%);
   background-size: auto, auto;
 }
 
@@ -1094,52 +1394,115 @@ body {
   }
 }
 
-/* 4. Cards que elevam no hover, com linha de brilho no topo */
-.stat,
-.formula {
+/* ============================================================
+   4. CARDS — a superfície comum, e o que cada card acrescenta
+   ============================================================
+
+   A base é uma classe só (`.card-base`) e é ela que carrega o papel, a
+   borda, o raio, a sombra dura e a **barra de acento do topo**. Ela é
+   separada do *lift* (`.card-lift`) porque nem todo card pode receber um
+   `transform` de hover: `.panel--3d` e `.formula--3d` são `motion.div`,
+   e o framer-motion escreve `transform` inline — um `:hover` de CSS seria
+   anulado por ele. Quem tem o transform no JS fica só com a base. */
+
+.card-base {
   position: relative;
+  /* Superfície translúcida, **sem** `backdrop-filter`. O desfoque seria o
+     natural do vidro, mas ele não sobrevive a esta página: todo ancestral com
+     `opacity < 1`, `mask`, `filter` ou `mix-blend-mode` vira *backdrop root*, e
+     aí o `backdrop-filter` do card só enxerga o que está pintado dentro dele —
+     que é nada. Aqui isso acontece em dois lugares permanentes: o `.deck__card`
+     mascarado (o desfoque da borda) e o painel do laboratório, que o
+     framer-motion anima com `opacity` em toda troca de questão. Nos dois, o
+     vidro embaçava o próprio card em vez da cena, e o cartão selecionado
+     ficava lavado.
+
+     O vidro continua funcionando: translucidez, borda que pega a luz e sombra
+     de profundidade. Sem desfoque o fundo translúcido precisa de um ponto mais
+     de opacidade — por isso o `--glass` estar em 74%. */
+  background: var(--glass);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius-md);
+  padding: var(--card-pad);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
-  transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
+  transition: border-color 0.25s var(--ease), box-shadow 0.25s var(--ease),
+    background 0.25s var(--ease);
 }
 
-.stat::before,
-.formula::before {
+/* O tamanho do card é a chave do padding: `-sm` para o número solto, o padrão
+   para o card de conteúdo, `-lg` para o card que é uma seção, e `--flush`
+   para quem já tem o padding nos filhos (`.qcard`, cujo head e body têm o
+   próprio — pôr padding aqui em cima somaria os dois). */
+.card-base--sm {
+  padding: var(--card-pad-sm);
+}
+
+.card-base--lg {
+  padding: var(--card-pad-lg);
+}
+
+.card-base--flush {
+  padding: 0;
+}
+
+/* A barra é **estado**, não enfeite: fica apagada e acende quando o card
+   é apontado, focado ou tocado. */
+.card-base::before {
   content: '';
   position: absolute;
   inset: 0 0 auto 0;
   height: 3px;
   background: linear-gradient(90deg, var(--accent), var(--gold));
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s var(--ease);
 }
 
-.stat:hover,
-.formula:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-lift);
+/* Quem não tem ponteiro (ou está no meio de um formulário) precisa ver o
+   mesmo estado do mouse. As duas metades do estado precisam coincidir: só a
+   borda mudava no `:focus-visible` e a barra ficava apagada, de modo que
+   focar o card inteiro o deixava metade aceso. */
+.card-base:focus-within,
+.card-base:focus-visible {
+  border-color: var(--accent);
 }
 
-.stat:hover::before,
-.formula:hover::before {
+.card-base:focus-within::before,
+.card-base:focus-visible::before {
   opacity: 1;
 }
 
-.card,
-.result {
-  transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
+/* Camada 2 — reservada a quem tem o transform no CSS. Aplicada ao `.qcard` e
+   ao `.result`, que são `div`/`article` comuns; `.panel--3d` e `.formula--3d`
+   ficam de fora porque são `motion.div` e o framer-motion escreve o
+   `transform` inline. */
+.card-lift {
+  transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease),
+    border-color 0.25s var(--ease);
 }
 
-.card:hover,
-.result:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lift);
+@media (hover: hover) and (pointer: fine) {
+  .card-lift:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    box-shadow: var(--shadow-lift);
+  }
+
+  .card-lift:hover::before {
+    opacity: 1;
+  }
 }
 
-/* 5. BotÃµes com microinteraÃ§Ã£o de press */
-.btn:hover {
-   transform: translate(-2px, -2px) scale(1.02);
- }
-/* 6. Destaque do hero em gradiente accent â†’ gold */
+/* `.formula--3d` só precisa do que a base não dá: o brilho varrido usa o
+   `overflow` e o `will-change` para varrer por cima do card. A transição é a
+   mesma da base, para o lift e para o transform do JS serem do mesmo tempo. */
+.formula--3d {
+  transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease),
+    border-color 0.25s var(--ease);
+}
+
+/* 5. Botões com microinteração de press */
+/* 6. Destaque do hero em gradiente accent ? gold */
 .hero__title em {
   background: linear-gradient(115deg, var(--accent), var(--gold));
   -webkit-background-clip: text;
@@ -1148,8 +1511,8 @@ body {
 }
 
 /* ============================================================
-   Fundo â€” quadro animado de CiÃªncia de Dados (SVG)
-   Substitui o antigo fundo de doodles (aurora + giz + grÃ£o).
+   Fundo — quadro animado de Ciência de Dados (SVG)
+   Substitui o antigo fundo de doodles (aurora + giz + grão).
    ============================================================ */
 :root {
   --board-opacity: 0.7;
@@ -1168,17 +1531,17 @@ body {
   width: 100%;
   height: 100%;
   opacity: var(--board-opacity);
-  /* Clareia o centro (onde vive o conteÃºdo) e mantÃ©m o quadro denso nas bordas. */
+  /* Clareia o centro (onde vive o conteúdo) e mantém o quadro denso nas bordas. */
   -webkit-mask-image: radial-gradient(ellipse 72% 66% at 50% 44%, rgba(0, 0, 0, 0.28), #000 84%);
   mask-image: radial-gradient(ellipse 72% 66% at 50% 44%, rgba(0, 0, 0, 0.28), #000 84%);
 }
 
 .board-bg__svg text {
-  font-family: var(--font-chalk);
+  font-family: var(--font-display);
   user-select: none;
 }
 
-/* GrÃ£o estÃ¡tico (ruÃ­do SVG em data-URI) para textura de ardÃ³sia. */
+/* Grão estático (ruído SVG em data-URI) para textura de ardósia. */
 .board-bg__grain {
   position: absolute;
   inset: 0;
@@ -1187,7 +1550,7 @@ body {
 }
 
 /* ============================================================
-   Letras estilo giz colorido â€” brilho colorido que atravessa
+   Letras estilo giz colorido — brilho colorido que atravessa
    (mesmo clima e ritmo do quadro animado de fundo)
    ============================================================ */
 .hero__title,
@@ -1197,8 +1560,8 @@ body {
   animation: chalk-pass 7s linear infinite;
 }
 
-/* SÃ³ aplica tinta com textura se o navegador souber recortar o fundo pelo texto
-   (evita texto invisÃ­vel / barra colorida em navegadores antigos). */
+/* Só aplica tinta com textura se o navegador souber recortar o fundo pelo texto
+   (evita texto invisível / barra colorida em navegadores antigos). */
 @supports ((-webkit-background-clip: text) or (background-clip: text)) {
   .hero__title,
   .section-head h2 {
@@ -1233,8 +1596,8 @@ body {
 }
 
 /* ============================================================
-   LaboratÃ³rio 3D â€” o quadro de giz portado para Three.js.
-   A cena Ã© o conteÃºdo: o canvas ocupa a Ã¡rea grande e os
+   Laboratório 3D — o quadro de giz portado para Three.js.
+   A cena é o conteúdo: o canvas ocupa a área grande e os
    controles ficam ao lado (desktop) ou na barra de baixo (mobile).
    ============================================================ */
 .ds3d {
@@ -1259,7 +1622,7 @@ body {
   overflow: hidden;
   border: 1px solid var(--rule-strong);
   box-shadow: var(--shadow-card);
-  /* mesma famÃ­lia de fundo da cena (preto â†’ azul-marinho) */
+  /* mesma família de fundo da cena (preto → azul-marinho) */
   background: radial-gradient(125% 100% at 50% 0%, #121b30, #05070d);
 }
 
@@ -1269,13 +1632,9 @@ body {
   display: block;
   width: 100%;
   height: 100%;
-  /* no celular o arrasto vertical continua rolando a pÃ¡gina */
+  /* no celular o arrasto vertical continua rolando a página */
   touch-action: pan-y;
-  cursor: grab;
-}
-
-.ds3d__canvas:active {
-  cursor: grabbing;
+  cursor: var(--cursor-star);
 }
 
 .ds3d__canvas:focus-visible {
@@ -1283,7 +1642,7 @@ body {
   outline-offset: -3px;
 }
 
-/* ---------- leituras ao vivo (nÃ£o capturam o ponteiro) ---------- */
+/* ---------- leituras ao vivo (não capturam o ponteiro) ---------- */
 .ds3d__hud {
   position: absolute;
   top: 0.9rem;
@@ -1358,13 +1717,16 @@ body {
   gap: 0.5rem;
   margin: 0 0 0.6rem;
   font-family: var(--font-display);
+  /* 600 explícito, pelo mesmo motivo do `.panel__title`: o 700 do navegador
+     deixaria este `h3` mais pesado que os outros títulos */
+  font-weight: 600;
   font-size: 1.15rem;
   color: var(--ds3d-live);
 }
 
 .ds3d__formula {
   margin: 0 0 0.7rem;
-  font-family: var(--font-chalk);
+  font-family: var(--font-display);
   font-size: clamp(1.35rem, 3vw, 2rem);
   line-height: 1.3;
   color: var(--ink);
@@ -1399,7 +1761,7 @@ body {
 .ds3d__detail {
   margin: 0.7rem 0 0;
   padding-top: 0.6rem;
-  border-top: 1px dashed var(--rule-strong);
+  border-top: 1px solid var(--rule-strong);
   font-family: var(--font-mono);
   font-size: 0.8rem;
   color: var(--ds3d-live);
@@ -1415,7 +1777,7 @@ body {
   padding: 1rem 1.2rem;
   text-align: center;
   border-radius: var(--radius-md);
-  border: 1px dashed var(--rule-strong);
+  border: 1px solid var(--rule-strong);
   background: var(--ds3d-panel);
   color: var(--ink-soft);
   font-size: 0.92rem;
@@ -1450,7 +1812,7 @@ body {
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  cursor: pointer;
+  cursor: var(--cursor-star);
 }
 
 .ds3d__nav button span {
@@ -1547,8 +1909,20 @@ body {
    SISTEMA 3D — Toda a página é interativa e tridimensional
    ============================================================ */
 
-/* --- Perspectiva base da cena --- */
-html {
+/* --- Perspectiva da cena: **nunca na raiz** ---
+   `perspective` ≠ `none` num elemento o torna *containing block* dos descendentes
+   `position: fixed`. Com ela no `html`, navbar, barra de progresso e o painel do
+   menu deixavam de ser presos à viewport e passavam a ser posicionados pelo
+   documento: o painel do menu abria no topo do documento — milhares de pixels
+   acima da janela, porque a jornada rola 500vh — e o botão parecia não fazer
+   nada. É o mesmo motivo pelo qual o `.app--3d` fica sem perspectiva (ver o
+   bloco "APP ROOT" no fim deste arquivo).
+
+   A perspectiva é dada só aqui, para as seções que têm peças 3D dentro
+   (`translateZ`/`rotateY` no hover dos cards). Nenhuma delas tem filho fixo. */
+.results--3d,
+.formulas--3d,
+.overview--3d {
   perspective: 1400px;
 }
 
@@ -1593,91 +1967,26 @@ html {
   z-index: -1;
 }
 
-/* ---- Stats card com efeito de profundidade ---- */
-.stat--3d {
-  position: relative;
-  overflow: hidden;
-  /* Fundo com glassmorphism */
-  background: color-mix(in srgb, var(--paper-raised) 88%, transparent);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid color-mix(in srgb, var(--rule-strong) 80%, var(--accent) 20%);
-  box-shadow:
-    0 4px 24px color-mix(in srgb, var(--accent) 8%, transparent),
-    inset 0 1px 0 rgba(255,255,255,0.15);
-}
+/* ---------- overview: o cartão da visão geral ---------- */
 
-/* Brilho lateral do stat card */
-.stat__shine {
-  position: absolute;
-  top: 0;
-  left: -60%;
-  width: 40%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
-  transform: skewX(-20deg);
-  pointer-events: none;
-  transition: left 0.5s var(--ease);
-}
+/* Substitui o card 3D que girava no hover. Aqui não há `backface-visibility`,
+   nem `transform: rotateY`, nem `height` travada: o cartão é uma peça só, com as
+   duas faces do antigo flip empilhadas no corpo, e o `CardDeck` mostra um cartão
+   por vez (ver `journey.css`).
 
-.stat--3d:hover .stat__shine {
-  left: 120%;
-  transition: left 0.55s var(--ease);
-}
-
-/* ============================================================
-   OVERVIEW — CARDS FLIP 3D
-   ============================================================ */
-.overview__grid--flip {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.25rem;
-}
-
-/* Container do flip */
-.flip-card {
-  height: 240px;
-  cursor: pointer;
-  /* Sem overflow aqui para preservar o 3D */
-}
-
-@media (max-width: 640px) {
-  .flip-card {
-    height: 220px;
-  }
-}
-
-.flip-card__inner {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-}
-
-.flip-card {
-  position: relative;
-}
-
-/* Faces do flip */
-.flip-card__face {
-  position: absolute;
-  inset: 0;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  border-radius: var(--radius-md);
-  padding: 1.4rem 1.5rem;
-  background: var(--paper-raised);
-  border: 1px solid var(--rule-strong);
-  border-left-width: 4px;
-  box-shadow: var(--shadow-card);
+   O papel, a borda, o raio, a sombra e o `overflow` vêm do `.card-base` — este
+   bloco é só o que o cartão acrescenta: coluna, respiro e o acento. O acento
+   fica **na lateral**, que é onde o olho entra e onde a cor por cartão faz
+   sentido; a barra de topo da base é da pilha (`.deck__tick`), então fica
+   apagada aqui em vez de repetir o mesmo acento duas vezes no mesmo objeto. */
+.ov-card {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  overflow: hidden;
+  border-left: 4px solid var(--ov-accent, var(--accent));
 }
 
-.flip-card__face h3 {
+.ov-card h3 {
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 1.15rem;
@@ -1685,26 +1994,37 @@ html {
   line-height: 1.2;
 }
 
-.flip-card__face--back {
-  transform: rotateY(180deg);
-  background: linear-gradient(135deg, var(--paper-raised), color-mix(in srgb, var(--accent-soft) 40%, var(--paper-raised)));
-}
-
-.flip-card__icon {
+.ov-card__icon {
   display: flex;
   align-items: center;
-  margin-bottom: 0.25rem;
+  color: var(--ov-accent, var(--accent));
 }
 
-.flip-card__hint {
-  margin-top: auto;
-  font-size: 0.72rem;
-  color: var(--ink-faint);
-  font-family: var(--font-mono);
-  letter-spacing: 0.06em;
+.ov-card__icon svg {
+  opacity: 1;
 }
 
-/* Listas dentro dos flip cards */
+/* a parte que era a face traseira: entra no corpo, separada por um fio */
+.ov-card__face--extra {
+  margin-top: 0.5rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--rule);
+}
+
+.ov-card__face p {
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+}
+
+/* O cartão em cena é o "expandido" — o mesmo estado que `.project-card.expanded`
+   tem no `manoelja`: a borda acende no acento dele. Como só a carta em cena é
+   montada, ela é a que recebe o destaque. */
+.deck__card .ov-card {
+  border-color: color-mix(in srgb, var(--ov-accent, var(--accent)) 55%, var(--rule-strong));
+  box-shadow: var(--shadow-card), 0 0 34px color-mix(in srgb, var(--ov-accent, var(--accent)) 12%, transparent);
+}
+
+/* Listas dentro dos cartões */
 .ov-card__list {
   display: grid;
   gap: 0.3rem;
@@ -1720,8 +2040,10 @@ html {
   position: relative;
 }
 
+/* O travessão, e não o ponto: a 0,78rem o `·` some dentro do card encolhido, e
+   o marcador precisa sobreviver à densidade mais apertada. */
 .ov-card__list li::before {
-  content: '?';
+  content: '—';
   position: absolute;
   left: 0;
   color: var(--accent);
@@ -1739,7 +2061,7 @@ html {
 .ov-card__back-label {
   font-family: var(--font-mono);
   font-size: 0.66rem;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--label-tracking);
   text-transform: uppercase;
   color: var(--ink-faint);
   margin: 0;
@@ -1748,7 +2070,13 @@ html {
 .ov-card__back-stats,
 .ov-card__back-params {
   display: flex;
-  gap: 1.5rem;
+  /* Enrolar é obrigatório: são três colunas com rótulos de até
+     "significância", e o card encolhe para 265px numa janela de 780px. Sem
+     isto o terceiro item transborda e o `overflow: hidden` do card come o
+     número sem aviso — o irmão `__back-dists` abaixo já enrolava, e é essa
+     diferença que denunciava o esquecimento. */
+  flex-wrap: wrap;
+  gap: 0.9rem 1.5rem;
   margin: 0.4rem 0;
 }
 
@@ -1758,6 +2086,9 @@ html {
   flex-direction: column;
   align-items: center;
   gap: 0.1rem;
+  /* sem isto o número empurra a coluna em vez de encolher */
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .ov-card__big {
@@ -1796,26 +2127,40 @@ html {
 /* ============================================================
    PANELS 3D (Results)
    ============================================================ */
+
+/* O painel tem o transform do framer-motion, então não recebe `card-lift`: o
+   lift de CSS seria anulado pelo `transform` inline. O estado fica no
+   `box-shadow` — e é o **mesmo** do `.card-lift:hover`, para que os quatro
+   cards reaguem igual ao ponteiro. */
 .panel--3d {
   position: relative;
   overflow: hidden;
-  transition: box-shadow 0.3s var(--ease);
-  will-change: transform;
+  transition: box-shadow 0.25s var(--ease);
 }
 
 .panel--3d:hover {
   box-shadow:
     var(--shadow-lift),
-    0 0 40px color-mix(in srgb, var(--accent) 8%, transparent);
+    0 0 20px color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
 /* ============================================================
    FORMULA CARDS 3D
    ============================================================ */
+
+/* O brilho varrido precisa do `overflow: hidden` para não vazar do raio, e do
+   `will-change` para varrer na compositora. Fora do estado de hover ele não
+   promoted-layeriza ninguém — a sombra e o transform vêm da base. */
 .formula--3d {
   position: relative;
   overflow: hidden;
+}
+
+.formula--3d:hover {
   will-change: transform;
+  box-shadow:
+    var(--shadow-lift),
+    0 0 20px color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
 .formula__shine {
@@ -1844,15 +2189,6 @@ html {
 }
 
 /* ============================================================
-   OVERVIEW RESPONSIVE
-   ============================================================ */
-@media (max-width: 640px) {
-  .overview__grid--flip {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ============================================================
    NAVBAR — micro-interações 3D
    ============================================================ */
 .navbar {
@@ -1866,20 +2202,6 @@ html {
 }
 
 .navbar__links {
-  transform-style: preserve-3d;
-}
-
-/* ============================================================
-   RESULTADOS — painel 3D
-   ============================================================ */
-.results--3d .compare {
-  transform-style: preserve-3d;
-}
-
-/* ============================================================
-   FÓRMULAS — grid 3D
-   ============================================================ */
-.formulas--3d .formulas {
   transform-style: preserve-3d;
 }
 
@@ -1922,119 +2244,74 @@ html {
   }
 }
 
-/* Ondulação de brilho lateral */
-@keyframes shine-sweep {
-  from { left: -70%; }
-  to   { left: 130%; }
-}
-
 /* ============================================================
-   EFEITO DE PROFUNDIDADE — sombras 3D nos cards hover
-   ============================================================ */
-.card {
-  transform-style: preserve-3d;
-  will-change: transform;
-}
-
-.card:hover {
-  transform: translateY(-3px) rotateX(-2deg) rotateY(1deg);
-  box-shadow:
-    var(--shadow-lift),
-    0 8px 30px color-mix(in srgb, var(--accent) 12%, transparent);
-}
-
-/* ============================================================
-   PREFERS-REDUCED-MOTION — respeito total
-   ============================================================ */
+   PREFERS-REDUCED-MOTION — o que a regra global não cobre
+   ============================================================
+   O corte de duração já vem do bloco global no meio do arquivo (todo `*` com
+   transição/animação em 0.01ms). Aqui só fica o que aquele não faz: zerar
+   transform, esconder brilho e partículas. */
 @media (prefers-reduced-motion: reduce) {
   .hero__particles { display: none; }
 
-  .flip-card__inner {
-    animation: none !important;
-    transition: none !important;
-  }
-
-  .stat--3d,
+  .result,
   .formula--3d,
   .panel--3d,
-  .flip-card {
+  .card-lift {
     transform: none !important;
-    transition: opacity 0.2s !important;
   }
 
-  .stat__shine,
   .formula__shine {
     display: none;
   }
 }
 
 /* ============================================================
-   MOBILE — Toque e orientação
-   ============================================================ */
+   MOBILE — toque e orientação
 
-/* No mobile, aumenta a área de toque dos cards */
+   O `:hover` gruda depois do toque no celular: o card fica elevado (e, no
+   `.card-lift`, até com borda de acento) até o próximo toque fora dele. Por
+   isso o hover é neutralizado aqui e o feedback passa a ser `:active`. E a
+   barra de acento deixa de depender do hover — sem ponteiro não existe hover,
+   então sem isto a identidade do card some inteira no celular. */
 @media (hover: none) and (pointer: coarse) {
-  .flip-card {
-    /* Indica que é tocável */
-    -webkit-tap-highlight-color: transparent;
+  .card-lift:hover {
+    transform: none;
+    border-color: var(--rule-strong);
+    box-shadow: var(--shadow-card);
   }
 
-  .flip-card__hint {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
+  .card-base::before {
+    opacity: 0.3;
   }
 
-  .flip-card__hint::before {
-    content: '??';
-    font-size: 0.9em;
+  .card-base:focus-within::before,
+  .card-lift:active::before {
+    opacity: 1;
   }
 
-  /* Stats cards no mobile têm toque mais responsivo */
-  .stat--3d:active {
-    transform: scale(0.97) rotateX(4deg) !important;
-    transition: transform 0.1s !important;
+  /* Só o deslocamento, e **nenhuma escala**. Um `scale(0.995)` aqui é o que
+     produzia a letra macia no estado ativo: escala fracionária força o
+     navegador a rasterizar o card numa escala não inteira, e a transição de
+     0,12s só agrava — o card fica 0,5% menor e recomposto enquanto o dedo
+     ainda está em cima. O `translateY(-1px)` é inteiro e não borra nada, e a
+     barra de acento acesa (acima) já dá o feedback do toque. */
+  .card-lift:active {
+    transform: translateY(-1px);
+    transition-duration: 0.12s;
   }
-}
 
-/* ============================================================
-   GLASSMORPHISM — melhorar contraste dos cards 3D sobre a ardósia
-   ============================================================ */
-.stat--3d {
-  background: color-mix(in srgb, var(--paper-raised) 82%, transparent);
-  border-color: color-mix(in srgb, var(--rule-strong) 70%, var(--accent) 30%);
-  box-shadow:
-    0 4px 24px rgba(0,0,0,0.4),
-    inset 0 1px 0 rgba(255,255,255,0.07);
-}
+  /* Alvos de toque. `.rail button` tinha 0.4rem de padding vertical e
+     `.formula__copy` 0.22rem — bem abaixo do mínimo confortável. */
+  .rail button,
+  .reveal__toggle,
+  .formula__copy {
+    min-height: 44px;
+    padding-inline: 0.75rem;
+  }
 
-.flip-card__face {
-  background: color-mix(in srgb, var(--paper-raised) 90%, transparent);
-}
-
-.flip-card__face--back {
-  background: linear-gradient(135deg,
-    var(--paper-raised),
-    color-mix(in srgb, var(--accent-soft) 60%, var(--paper-raised))
-  );
-}
-
-.panel--3d:hover {
-  box-shadow:
-    var(--shadow-lift),
-    0 0 50px color-mix(in srgb, var(--accent) 12%, transparent);
-}
-
-.formula--3d {
-  box-shadow:
-    var(--shadow-card),
-    inset 0 1px 0 rgba(255,255,255,0.05);
-}
-
-.formula--3d:hover {
-  box-shadow:
-    var(--shadow-lift),
-    0 0 30px color-mix(in srgb, var(--accent) 10%, transparent);
+  .rail button {
+    padding-block: 0.5rem;
+  }
 }
 
 /* ============================================================

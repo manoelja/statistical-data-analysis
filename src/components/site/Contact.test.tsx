@@ -9,16 +9,22 @@ import { Contact } from './Contact';
  *
  * Os links estão em `href="#"` (placeholder) — o que este teste garante é a
  * estrutura e a acessibilidade do gatilho, não os URLs.
+ *
+ * A sala é **só os botões**: com a moldura do card fora, o texto de abertura
+ * viraria uma frase solta flutuando sobre a nebulosa, sem superfície atrás.
  */
 describe('Contact', () => {
   it('monta os quatro botões de saída', () => {
-    const { getByRole, getByText } = render(<Contact />);
+    const { container, getByRole, queryByText } = render(<Contact />);
 
     expect(getByRole('link', { name: /github/i })).toBeInTheDocument();
     expect(getByRole('link', { name: /linkedin/i })).toBeInTheDocument();
     expect(getByRole('link', { name: /portf/i })).toBeInTheDocument();
     expect(getByRole('button', { name: /sobre o desenvolvedor/i })).toBeInTheDocument();
-    expect(getByText(/nébulosa acende/i)).toBeInTheDocument();
+
+    // e nenhum texto de acompanhamento: os botões são o conteúdo inteiro
+    expect(container.querySelector('.contact__lead')).toBeNull();
+    expect(queryByText(/nébulosa acende/i)).not.toBeInTheDocument();
   });
 
   it('os três links externos abrem em aba nova com segurança', () => {
@@ -56,6 +62,10 @@ describe('Contact', () => {
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
     expect(box?.textContent).toMatch(/manoel/i);
     expect(box?.textContent).toMatch(/sinasc/i);
+
+    // a caixa publica a origem dos dados, nunca um e-mail: sair da página é pelos
+    // botões ao lado
+    expect(box?.textContent).not.toMatch(/@/);
 
     // e fecha de novo no mesmo gatilho. O `AnimatePresence` deixa o elemento
     // montado durante a animação de saída, então o que conta é o estado.
