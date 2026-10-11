@@ -50,6 +50,9 @@ import { createViewer, hasWebGL, type Viewer } from '../../lib/scene/three/viewe
 const MAX_FPS = 60;
 /** teto de FPS quando o usuário pediu menos movimento */
 const REDUCED_FPS = 24;
+/** teto de FPS no celular: 60 fps não fecha quadro nesta cena, e a queda
+    aparecia na entrada, quando a animação ainda está acelerando */
+const MODEST_FPS = 30;
 
 /** o conteúdo real de cada etapa, dentro do card */
 const CARD_CONTENT: ReactNode[] = [
@@ -67,6 +70,23 @@ function prefersReducedMotion(): boolean {
     typeof window.matchMedia === 'function' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
+}
+
+/**
+ * A máquina é fraca o bastante para não fechar 60 fps nesta cena?
+ *
+ * `pointer: coarse` separa celular/tablet de desktop — e é o sinal mais fiel
+ * que existe, porque um notebook com touch tem mouse. O número de núcleos
+ * entra como segunda rede de segurança, para o celular que reporta o ponteiro
+ * fino. Os dois sãoMediaQueryList/`navigator`, lidos só na montagem.
+ */
+function isModestDevice(): boolean {
+  if (typeof window === 'undefined') return false;
+  const coarse =
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(pointer: coarse)').matches;
+  const cores = navigator.hardwareConcurrency ?? 8;
+  return coarse || cores <= 4;
 }
 
 export function Journey3D() {
@@ -91,6 +111,7 @@ export function Journey3D() {
   const [fase, setFase] = useState<'prologo' | 'corredor' | 'epilogo'>('prologo');
 
   const reduced = prefersReducedMotion();
+  const modest = isModestDevice();
 
   // ---------- montagem da cena ----------
   useEffect(() => {
@@ -175,6 +196,10 @@ export function Journey3D() {
   }, [reduced]);
 
   // ---------- loop único: move a câmera, aplica os cards e desenha ----------
+  // 60 fps é o teto do desktop. No celular a mesma cena a 60 fps não fecha
+  // quadro — o navegador entrega 30 e ainda sobra CPU e bateria, e a queda
+  // aparece justamente na entrada, onde a animação ainda está acelerando. 30
+  // fps é o mesmo movimento com metade do trabalho por quadro.
   useRafLoop(
     (deltaMs) => {
       const journey = journeyRef.current;
@@ -237,7 +262,7 @@ export function Journey3D() {
       setFase((current) => (current === onde ? current : onde));
       setAtTop((current) => (current === (scroll < 40) ? current : scroll < 40));
     },
-    { fps: reduced ? REDUCED_FPS : MAX_FPS },
+    { fps: reduced ? REDUCED_FPS : modest ? MODEST_FPS : MAX_FPS },
   );
 
   // ---------- navegação por etapa (régua, teclado e âncoras) ----------
@@ -374,10 +399,13 @@ export function Journey3D() {
               className={`journey__meter-step${index === active ? ' is-active' : ''}`}
               aria-current={index === active ? 'step' : undefined}
               aria-label={`${index + 1}. ${chapter.title}`}
+              title={chapter.title}
               onClick={() => goToChapter(index)}
             >
               <span className="journey__meter-dot" aria-hidden="true" />
-              <span className="journey__meter-name">{chapter.title}</span>
+              <span className="journey__meter-name" aria-hidden="true">
+                {chapter.title}
+              </span>
             </button>
           ))}
         </nav>

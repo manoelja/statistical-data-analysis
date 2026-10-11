@@ -8,6 +8,15 @@
   /* O fundo é mais frio e mais fundo que a ardósia que era: o negro do
      corredor, não o papel de um caderno. */
   --paper: #0b0d14;
+  /* O preto do corredor, e é o mesmo do palco 3D (`--journey-void`): a página
+     inteira é a jornada, então essa é a cor que aparece atrás do resto.
+
+     Ela vive num token só porque a barra de rolagem **não tem track** — e sem
+     ele, os 10px que ela ocupa mostravam a diferença entre as duas cores. O
+     palco tem `width: 100%`, e 100% da largura disponível já vem descontada a
+     barra; sobrava uma fatia de `--paper` ao lado do palco que lia como uma
+     coluna opaca cortando a nebulosa. */
+  --void: #05070f;
   /* Superfície **opaca** — a que recebe conteúdo digitado, onde o que está
      atrás é ruído. Input de número, botão, aba: aqui a translucidez só
      atrapalharia a leitura do que está sendo escrito. */
@@ -137,6 +146,16 @@ summary,
 html {
   scroll-behavior: smooth;
   scroll-padding-top: calc(var(--nav-h) + 16px);
+  /* A barra de rolagem não tem track, então o que aparece atrás dela é esta
+     cor. Ela precisa ser a do palco (`--void`), e não a do `body`: são duas
+     cores diferentes e a diferença de 10px na borda aparecia como uma coluna
+     mais clara cortando a nebulosa.
+
+     Emendar no `html` — e não no `body` — é o que resolve: a fundo do `body`
+     é propagado para a tela inteira **enquanto o `html` não tiver o seu**. Com
+     ele aqui, a propagação para e o `body` passa a pintar só a sua caixa, que
+     já vem descontada a barra. */
+  background-color: var(--void);
 }
 
 body {
@@ -412,28 +431,132 @@ ul {
   transition: width 0.1s linear;
 }
 
-/* ---------- drawer mobile ---------- */
+/* ---------- gaveta mobile ----------
+   Desenho portado de `data-base-analysis/src/components/Navbar/Navbar.css`:
+   painel lateral na direita, com o fundo escurecido atrás fechando o resto da
+   tela. Aqui a gaveta **não** cobre tudo — antes ela ocupava a tela inteira e
+   o menu vivia sozinho sobre a nebulosa, sem nenhum fundo que dissesse "a
+   página parou aqui". */
+.drawer__backdrop {
+  position: fixed;
+  inset: 0;
+  /* Acima da navbar (60) e da barra de progresso (70): com a gaveta aberta a
+     página está travada, e o menu é o que está por cima de tudo. */
+  z-index: 75;
+  background: rgba(3, 5, 11, 0.72);
+}
+
 .drawer {
   position: fixed;
-  inset: var(--nav-h) 0 0 0;
-  z-index: 55;
+  /* `top: 0`: a gaveta **cobre** a navbar, como na referência. É o que deixa
+     um X só na tela — o da navbar fica atrás da gaveta, e o do cabeçalho fica
+     por cima. Os dois ainda existem no DOM; só um aparece. */
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 80;
+  width: 280px;
+  max-width: calc(100vw - 2.5rem);
   /* A gaveta é a **exceção** à barra sem superfície: ela precisa de uma, porque
-     cobre a página inteira e os links precisam de fundo para não se misturarem
-     ao quadro 3D. Papel em 82% e desfoque fecham essa conta. */
+     a peça 3D fica logo atrás do vidro e os links precisam de fundo para não
+     se misturarem ao quadro. Papel em 82% e desfoque fecham essa conta. */
   background: color-mix(in srgb, var(--paper) 82%, transparent);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
-  padding: 1.5rem;
+  border-left: 1px solid var(--rule-strong);
+  padding: 1.25rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  /* Pode passar da tela em paisagem baixa, e aí é ela que tem de rolar.
+     `overscroll-behavior: contain` impede que a rolagem dela vaze para a página
+     nas pontas — sem isso, chegar ao fim da lista arrastaria a jornada por
+     baixo. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
-.drawer a {
-  font-family: var(--font-display);
-  font-size: 1.4rem;
-  padding: 0.7rem 0.25rem;
+.drawer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 1rem;
+  margin-bottom: 0.5rem;
   border-bottom: 1px solid var(--rule);
+}
+
+/* A marca do próprio projeto no cabeçalho, como na referência. Não é enfeite:
+   a linha do cabeçalho era o lugar de um rótulo genérico ("navegar"), que só
+   descrevia o componente em que estava — e era o espaço que dava para dizer de
+   quem é o menu.
+
+   A 280px de gaveta o nome inteiro não cabe ao lado do X, então ele cede: a
+   marca fica, o nome corta com reticências. */
+.drawer__head .brand {
+  font-size: 0.8rem;
+  min-width: 0;
+  gap: 0.5rem;
+}
+
+.drawer__head .brand__mark {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  font-size: 0.72rem;
+}
+
+.drawer__brand-name {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.drawer__close {
+  width: 36px;
+  height: 36px;
+}
+
+.drawer__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+/* 44px de caixa: o alvo de toque mínimo, e o número à esquerda ocupa a faixa que
+   o padding faria sozinho — assim o link fica com a altura que o polegar
+   precisa sem parecer um botão grande. */
+.drawer__list a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 44px;
+  padding: 0.5rem 0.7rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  transition: color 0.2s, background 0.2s;
+}
+
+.drawer__list a:hover,
+.drawer__list a.active {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.drawer__index {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: var(--ink-faint);
+  flex: none;
+}
+
+.drawer__list a.active .drawer__index {
+  color: var(--accent);
 }
 
 /* ---------- hero ---------- */
@@ -1358,7 +1481,9 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, var(--accent), var(--gold));
+  /* Roxa e sólida. Era um gradiente de índigo a ouro — e o ouro aparecia na
+     ponta da barra com uma cor que não existe em mais lugar nenhum da página. */
+  background: var(--accent);
   border-radius: var(--radius-pill);
   border: 2px solid transparent;
   background-clip: content-box;

@@ -30,7 +30,9 @@
   height: 100vh;
   overflow: hidden;
   z-index: 1;
-  background: #05070f;
+  /* o mesmo preto do `html` (--void): a barra de rolagem não tem track e
+     deixa esta cor aparecer na borda, então as duas não podem divergir */
+  background: var(--void);
   isolation: isolate;
 }
 
@@ -171,7 +173,7 @@
      barra fixa de cima (68px) e a régua de profundidade embaixo (~53px) não
      podem ser atravessadas — 9,5rem reservam os dois com folga. O `42rem`
      continua como teto para não esticar o card numa janela muito alta. */
-  height: min(calc(100vh - 9.5rem), 42rem);
+  height: min(calc(100svh - 9.5rem), 42rem);
   /* A base tipográfica do card. O conteúdo inteiro dos laboratórios é herdado
      (ou declarado em `em`), então é daqui que vem boa parte do ganho — o que
      tem `rem` fixo está listado um a um na densidade abaixo. */
@@ -520,22 +522,27 @@
      mostrar barra **horizontal**. Nada aqui rola para o lado. */
   overflow-x: hidden;
   overflow-y: auto;
-  overscroll-behavior: contain;
-  /* A barra **não é pintada** — e é isso que faz a troca de questão parar de
-     piscar. A carta que entra começa 16px abaixo (o `y` do `variants.enter`, em
-     `LabSection`) e um deslocamento de transform conta como área rolável: como
-     a questão preenche a caixa exatamente, esses 16px já bastavam para a barra
-     nascer por 0,36s.
+  /* **Sem** `overscroll-behavior: contain` — e este é o defeito que ele
+     causava. A peça é uma lista com rolagem **própria**, dentro de uma página
+     que também rola, e no celular as duas competem pelo mesmo gesto.
 
-     Pior: a barra consome ~8px de largura, e a carta que sai já está em
-     absoluto com a largura **medida antes** dela — ficava 8px mais larga que a
-     caixa e disparava a barra horizontal também (uma barra causando a outra).
-     Sem barra pintada o problema morre na raiz: a largura não muda, então não
-     há cascata, e nada pisca.
+     Com `contain`, chegar ao fim da lista **matava o gesto**: ele não passava
+     para a página. O resultado era que arrastar o dedo sobre o card não movia
+     nada visível — a lista rolava sem barra nenhuma, e no fim ela travava —
+     e a única forma de rolar a página era puxar a barra da direita com o dedo.
+     Isso atingia justamente as partes 1 e 2 e os resultados, que são os cards
+     mais altos e portanto os únicos em que a lista de fato transborda.
 
-     A rolagem continua existindo (roda do mouse, arrasto, teclado): ela é a
-     rede para uma janela muito mais baixa do que a peça, e sem barra ela
-     também não rouba largura nenhuma. */
+     Sem o `contain` (o padrão é `auto`) o gesto continua: a lista interna
+     consome o que tem e o resto vai para a página, que é o comportamento que
+     o dedo espera em qualquer lista aninhada. A razón de ser do `contain` era
+     "ler a questão não pode adiantar o capítulo" — mas impedir o encadeamento
+     não impede o que se queria, só faz a página parecer travada.
+
+     A barra **não é pintada** — e isso é de propósito: ela consome ~8px de
+     largura, e a carta que sai já está em absoluto com a largura **medida
+     antes** dela, o que disparava também a barra horizontal. Sem barra pintada
+     a largura não muda, então não há cascata, e nada pisca. */
   scrollbar-width: none;
 }
 
@@ -766,8 +773,12 @@
 .journey__meter-step {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
-  padding: 0.25rem 0.55rem;
+  /* O alvo é o ponto, então a caixa é que faz a área clicável: com o rótulo
+     fora, o padding que antes era o do texto deixaria um ponto de 8px cercado
+     de quase nada. */
+  padding: 0.6rem 0.7rem;
   border: 0;
   background: transparent;
   color: var(--ink-soft);
@@ -806,6 +817,20 @@
   background: #27c4e0;
   border-color: #27c4e0;
   box-shadow: 0 0 12px rgba(39, 196, 224, 0.85);
+}
+
+/* A régua é **só de pontos**, em toda largura. O rotulado vivia acima de 1200px,
+   e era aí que ela lia como uma segunda barra de menu brigando com a do navbar
+   em vez de um indicador de posição na viagem — ela ocupa o rodapé inteiro da
+   tela para dizer a mesma coisa que um ponto aceso já diz.
+
+   O nome do capítulo não se perde: ele sai da tela mas continua no
+   `aria-label` do botão (leitor de tela) e no `title` (tooltip nativo do
+   mouse). Os dois caminhos que já existiam continuam valendo — só o desenho
+   some. E sem o nome a régua deixa de transbordar, que era o que obrigava a
+   rolagem horizontal fantasma no celular. */
+.journey__meter-name {
+  display: none;
 }
 
 /* ---------- aviso e voltar ao topo ---------- */
@@ -872,11 +897,6 @@
     font-size: 0.85rem;
     margin-top: 0.75rem;
   }
-
-  /* a régua já é compacta: os nomes somem antes de encostar nas bordas */
-  .journey__meter-name {
-    display: none;
-  }
 }
 
 @media (max-width: 768px) {
@@ -916,29 +936,29 @@
     height: min(44vh, 20rem);
   }
 
-  /* A altura aqui é da **janela**, não do card: ela é o que sobra entre a régua
-     no rodapé e o topo. No celular a peça 3D já está atrás do card (ele tem
-     86vw), então a altura que sobrava acima e abaixo era espaço morto — e era
-     justamente o espaço que cortava as questões das partes 1 e 2, que são as
-     mais altas (5 sliders + gráfico + resultados). O teto em `rem` sobe junto
-     com o do desktop: 30rem (480px) cortava as mesmas peças num aparelho alto,
-     onde o `84vh` pedia justamente os ~600px que o conteúdo pede. */
+  /* A mesma conta da regra base, com o teto menor. E `svh`, pelo mesmo motivo
+     dela: no celular `vh` é a janela com a barra do navegador recolhida, e o
+     card saía maior do que a tela — sobrava por baixo da navbar e por baixo da
+     régua. Esta regra é a que governa os celulares: a janela baixa tem ~667px,
+     então a de `max-height: 780px` vem depois e manda nesta. */
   .journey__card-inner {
-    height: min(84vh, 40rem);
+    height: min(calc(100svh - 9.5rem), 40rem);
   }
 
+  /* Sem `overflow-x`: com a régua só de pontos, ela cabe na tela e não tem
+     nada para rolar. Antes isso mantinha um container de rolagem cujo scrollbar
+     estava oculto — e é ele que engolia o gesto horizontal do dedo: a régua
+     "funcionava" só enquanto estava à vista e, fora dela, o arrasto não
+     encontrava alvo nenhum. Sem container de rolagem, o gesto volta a ser da
+     página inteira, que é quem rola na viagem. */
   .journey__meter {
     max-width: calc(100vw - 1.2rem);
-    overflow-x: auto;
-    scrollbar-width: none;
   }
 
-  .journey__meter::-webkit-scrollbar {
-    display: none;
-  }
-
+  /* O alvo de toque passa a ser o ponto, não o rótulo: a caixa tem 44px — o
+     mínimo confortável — em volta do ponto de 8px. */
   .journey__meter-step {
-    padding: 0.25rem 0.4rem;
+    padding: 0.85rem 0.9rem;
   }
 
   .journey__top span {
@@ -1060,11 +1080,19 @@
    `line-height` dos parágrafos de conclusão — que são vários — fecha a conta.
 
    Vale para qualquer largura: janela baixa é janela baixa no monitor grande
-   também. A folga de 8,5rem mantém 68px livres acima do card, que é a barra
-   fixa de cima. */
+   também. E a folga tem de ser a mesma da regra base (9,5rem), porque é ela que
+   mantém os 68px livres acima do card — a barra fixa de cima. O código dizia
+   7rem, que só dava 56px: o próprio comentário prometia 68 e a regra entregava
+   menos, que é como o card foi parar por baixo da navbar no celular. */
 @media (max-height: 780px) {
+  /* `svh`, e não `vh`: no celular `100vh` é a janela **com a barra do navegador
+     recolhida**, e o que está de fato visível é 90 a 130px menor. Calcular a
+     altura por ela produz um card maior do que a tela em que ele aparece — e o
+     excesso sai pelas duas pontas: topo por baixo da navbar, base por baixo da
+     régua. `svh` é a menor: a barra fechada é o pior caso, e é o que o card
+     precisa caber sempre. No desktop `svh` e `vh` são a mesma coisa. */
   .journey__card-inner {
-    height: min(calc(100vh - 7rem), 40rem);
+    height: min(calc(100svh - 9.5rem), 40rem);
     font-size: 0.74rem;
   }
 
@@ -1109,18 +1137,29 @@
 
 /* ---------- tela baixa: o card é a tela toda e o texto encolhe ----------
 
-   Um celular deitado, uma janela pequena ou um tablet em paisagem têm altura
+Um celular deitado, uma janela pequena ou um tablet em paisagem têm altura
    para menos de um cartão. Aí não é a **largura** que aperta o conteúdo — é a
    altura — e encolher a tipografia pela largura (o que o `@container` faz) não
-   ajuda: o texto já é o menor que se lê. O que resolve é o contrário: dar a
-   tela inteira ao card e baixar mais um degrau a base do texto.
+   ajuda: o texto já é o menor que se lê. O que resolve é baixar mais um degrau a
+   base do texto e dar ao card tudo o que sobra **depois** das barras fixas.
 
-   Ainda pode sobrar dobra — nesse caso é a rolagem interna, com a barra nos
-   laboratórios e a borda esmaecida nos demais, que assume. O que não pode é o
-   corte mudo. */
+   Ainda pode sobrar dobra — nesse caso é a rolagem interna, com a borda
+   esmaçada que assume. O que não pode é o corte mudo, nem o card por baixo da
+   navbar. */
 @media (max-width: 768px) and (max-height: 720px) {
+  /* **Não** é a tela toda. O `94vh` que estava aqui dava 627px num celular de
+     667px, e o card é centrado na janela: o topo dele caía a 20px — debaixo da
+     navbar, que tem 68px — e a base ficava debaixo da régua de pontos. Era
+     este o bloco que governa o celular, e ele vem depois de todos os outros,
+     então qualquer ajuste nas outras regras não chegava até aqui.
+
+     A folga é a mesma da regra base: 9,5rem para as duas barras (68px da navbar
+     em cima, ~60px da régua embaixo) mais o respiro. E `svh`, porque `94vh` no
+     celular é a janela com a barra do navegador recolhida — 90 a 130px maior do
+     que a que está visível. O que sobra é rolagem interna, que é o caminho
+     honesto quando a peça é mais alta que a tela. */
   .journey__card-inner {
-    height: 94vh;
+    height: calc(100svh - 9.5rem);
     font-size: 0.72rem;
   }
 

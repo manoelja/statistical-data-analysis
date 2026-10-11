@@ -7,8 +7,8 @@ import { Contact } from './Contact';
  * O contato é a saída da página: três links externos, o portfólio com a marca do
  * projeto e a caixa "sobre" que abre **abaixo** do botão.
  *
- * Os links estão em `href="#"` (placeholder) — o que este teste garante é a
- * estrutura e a acessibilidade do gatilho, não os URLs.
+ * Os links reais estão em `LINKS` — o que este teste garante é a estrutura e a
+ * acessibilidade do gatilho, não os URLs.
  *
  * A sala é **só os botões**: com a moldura do card fora, o texto de abertura
  * viraria uma frase solta flutuando sobre a nebulosa, sem superfície atrás.

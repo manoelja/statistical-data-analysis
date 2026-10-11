@@ -36,9 +36,69 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // ---------- gaveta aberta trava a página ----------
+  /* Sem isto a página **continua rolando por baixo** da gaveta, e aqui isso não
+     é um detalhe: o que rola embaixo é a jornada. O palco é `sticky` e a câmera
+     é movida pelo `scrollY` a cada quadro, então a nebulosa e os cards andavam por baixo de um menu que parecia parado — a gaveta parecia quebrada, e
+     não era ela.
+
+     O truque é o de `data-base-analysis/src/components/Navbar/Navbar.tsx`:
+     segurar `touchmove` e `wheel` no `document` com `passive: false`, e só
+     cancelar o gesto que **não** começa dentro da gaveta. `passive: false` é o
+     que dá o direito de chamar `preventDefault` — com `passive: true` (o padrão
+     do `wheel`) o navegador rola antes de o listener ver o evento. */
+  useEffect(() => {
+    if (!open) return;
+
+    const scrollY = window.scrollY;
+    const drawer = document.querySelector<HTMLElement>('.drawer');
+    const preventScroll = (event: Event) => {
+      /* A gaveta é o único canto que pode rolar. A primeira versão deste
+         código liberava qualquer gesto que começasse dentro dela, copiado da
+         referência — e aqui isso desligava o lock inteiro: a gaveta deste
+         projeto ocupa a tela toda (`inset: var(--nav-h) 0 0 0`), então **todo**
+         gesto de toque nasce dentro dela e passava direto. A exceção só faz
+         sentido onde o menu é uma painel lateral e sobra área ao lado, como no
+         `data-base-analysis`.
+
+         Então a exceção é condicionada ao que interessa: ela só vale quando a
+         gaveta realmente tem o que rolar. */
+      if (drawer && drawer.contains(event.target as Node) && drawer.scrollHeight > drawer.clientHeight) {
+        return;
+      }
+      event.preventDefault();
+    };
+
+    document.addEventListener('touchmove', preventScroll, { passive: false });
+    document.addEventListener('wheel', preventScroll, { passive: false });
+
+    return () => {
+      document.removeEventListener('touchmove', preventScroll);
+      document.removeEventListener('wheel', preventScroll);
+      // A página não deveria ter se mexido — mas no iOS o elástico do
+      // `touchmove` anda mesmo com o gesto cancelado. `'instant'` e não o
+      // padrão porque o `html` tem `scroll-behavior: smooth`, e restaurar a
+      // posição com animação apareceria como um salto ao fechar.
+      window.scrollTo({ top: scrollY, behavior: 'instant' });
+    };
+  }, [open]);
+
+  const scrollToSection = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   const goTo = (id: string) => {
     setOpen(false);
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    scrollToSection(id);
+  };
+
+  /** Mesma coisa, mas **espera a gaveta sair**. O destravamento acima restaura a
+      posição de rolagem no fim da animação: se o `scrollIntoView` começasse
+      junto, ele seria desfeito de imediato e o link pareceria quebrado. O
+      tempo é o da animação de saída da gaveta (0,28s abaixo). */
+  const goToFromDrawer = (id: string) => {
+    setOpen(false);
+    window.setTimeout(() => scrollToSection(id), 280);
   };
 
   return (
@@ -108,33 +168,75 @@ export function Navbar() {
         </div>
       </header>
 
-      {/* Drawer mobile com animação 3D */}
+      {/* Gaveta mobile: painel lateral da direita, com fundo escurecido atrás.
+          O desenho é o de `data-base-analysis/src/components/Navbar/Navbar.css`
+          — lá a gaveta cobria a tela toda e o backdrop era decorativo; aqui ela
+          é uma placa de 280px na borda, e o fundo é o que fecha o resto. */}
       <AnimatePresence>
         {open && (
-          <motion.nav
-            className="drawer"
-            initial={{ opacity: 0, rotateX: -12, y: -16 }}
-            animate={{ opacity: 1, rotateX: 0, y: 0 }}
-            exit={{ opacity: 0, rotateX: -12, y: -16 }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            style={{ perspective: '600px', transformOrigin: 'top center' }}
-            aria-label="Seções"
-          >
-            {LINKS.map((link, i) => (
-              <motion.a
-                key={link.id}
-                href={`#${link.id}`}
-                onClick={e => { e.preventDefault(); goTo(link.id); }}
-                initial={{ opacity: 0, x: -20, rotateY: -10 }}
-                animate={{ opacity: 1, x: 0, rotateY: 0 }}
-                transition={{ delay: i * 0.05, duration: 0.3 }}
-                whileTap={{ scale: 0.97, translateX: 4 }}
-                style={{ perspective: '400px' }}
-              >
-                {link.label}
-              </motion.a>
-            ))}
-          </motion.nav>
+          <>
+            <motion.div
+              className="drawer__backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.24 }}
+              onClick={() => setOpen(false)}
+              aria-hidden="true"
+            />
+
+            <motion.nav
+              className="drawer"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+              aria-label="Seções"
+            >
+              {/* Cabeçalho da gaveta: a marca e o X de fechar. O botão da navbar também
+                  continua lá, e vira X quando o menu abre — mas a gaveta está
+                  por cima dele, então o da navbar some da tela e o que se vê é
+                  este. Um X só, como na referência. */}
+              <div className="drawer__head">
+                <span className="brand">
+                  <span className="brand__mark" aria-hidden="true">
+                    <span>P&amp;I</span>
+                  </span>
+                  <span className="drawer__brand-name">Probabilidade &amp; Inferência</span>
+                </span>
+                <button
+                  type="button"
+                  className="icon-btn drawer__close"
+                  onClick={() => setOpen(false)}
+                  aria-label="Fechar menu"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <ul className="drawer__list">
+                {LINKS.map((link, i) => (
+                  <motion.li
+                    key={link.id}
+                    initial={{ opacity: 0, x: 24 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.05, duration: 0.3 }}
+                  >
+                    <a
+                      href={`#${link.id}`}
+                      className={active === link.id ? 'active' : ''}
+                      onClick={e => { e.preventDefault(); goToFromDrawer(link.id); }}
+                    >
+                      <span className="drawer__index" aria-hidden="true">
+                        {String(i + 1).padStart(2, '0')}
+                      </span>
+                      <span>{link.label}</span>
+                    </a>
+                  </motion.li>
+                ))}
+              </ul>
+            </motion.nav>
+          </>
         )}
       </AnimatePresence>
     </>

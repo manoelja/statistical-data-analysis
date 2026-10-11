@@ -7,8 +7,7 @@
  * com a nuvem: a nebulosa fica em cima, os botões em baixo.
  *
  * Os quatro botões são a saída da página — o lugar onde a jornada vira endereço.
- * Três abrem link externo e o quarto abre a caixa "sobre". Todos com placeholder
- * (`href="#"`): os links reais entram aqui.
+ * Três abrem link externo e o quarto abre a caixa "sobre".
  */
 
 import { useState } from 'react';
@@ -16,16 +15,13 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUpRight, ChevronDown, Github, Linkedin, User } from 'lucide-react';
 
 /**
- * Os links de saída. **Placeholder** — trocar pelos URLs reais.
- * `portfolio` usa o ícone que já vive em `public/manoelja.svg` (o raio).
+ * Os links de saída. `portfolio` usa o ícone que já vive em `public/manoelja.svg`
+ * (o raio).
  */
 const LINKS = {
-  // TODO(url): colar o endereço do GitHub
-  github: '#',
-  // TODO(url): colar o endereço do LinkedIn
-  linkedin: '#',
-  // TODO(url): colar o endereço do portfólio
-  portfolio: '#',
+  github: 'https://github.com/manoelja/statistical-data-analysis',
+  linkedin: 'https://www.linkedin.com/in/manoelja',
+  portfolio: 'https://manoelja.vercel.app',
 };
 
 export function Contact() {
