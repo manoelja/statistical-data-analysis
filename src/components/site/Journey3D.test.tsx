@@ -69,7 +69,7 @@ describe('Journey3D', () => {
     const note = container.querySelector('.journey__prologue-note') as HTMLElement;
     expect(eyebrow.textContent).toMatch(/SINASC/i);
     expect(title.textContent).toMatch(/do outro lado do horizonte/i);
-    expect(note.textContent).toMatch(/só vemos a luz que escapa/i);
+    expect(note.textContent).toMatch(/é a projeção da população/i);
   });
 
   it('o paralaxe volta ao centro quando o ponteiro sai da tela', () => {

@@ -470,7 +470,18 @@ ul {
   /* Pode passar da tela em paisagem baixa, e aí é ela que tem de rolar.
      `overscroll-behavior: contain` impede que a rolagem dela vaze para a página
      nas pontas — sem isso, chegar ao fim da lista arrastaria a jornada por
-     baixo. */
+     baixo.
+
+     O `overflow-x: hidden` **não** contraria o `overflow-y: auto`, é o que o
+     segura: a regra do CSS Overflow diz que um eixo `visible` computa para
+     `auto` quando o outro não é, então declarar só o `y` já dava à gaveta uma
+     barra de rolagem **horizontal** também. Ela aparecia no *stagger* da
+     abertura — cada `<li>` entra com `x: 24` (Navbar.tsx), transborda 24px, e
+     o `* { scrollbar-color: var(--accent) }` do fim do arquivo pintava essa
+     barra de roxo: uma linha fina no rodapé do menu, que sumia quando o
+     *stagger* terminava. `hidden` no `x` mata a barra sem tocar no `y`, que é
+     o que a paisagem baixa continua precisando. */
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -1470,10 +1481,25 @@ body {
   background-size: auto, auto;
 }
 
-/* 2. Scrollbar com as cores do tema */
+/* 2. Scrollbar com as cores do tema
+   Receita do `data-base-analysis/src/styles/global.css:178`, que é a referência
+   daqui. As duas APIs convivem de propósito: `::-webkit-scrollbar-*` para o
+   Chrome/Safari e `scrollbar-color` para o Firefox.
+
+   O polegar é o acento a **30%**, e essa é a parte que importa: sólido, a coluna
+   inteira da barra lê como um trilho claro em cima do papel escuro — era o que
+   aparecia como uma faixa semitransparente ao lado do conteúdo. A 30% a barra
+   some no fundo e só o polegar fica, que é o desenho da referência. No `hover`
+   sobe para 50%, repetindo o `background-clip` em vez de usar `filter`: os
+   pseudo-elementos de scrollbar têm suporte parcial a `filter`, e o `clip` é o
+   que recorta a cor no miolo da barra.
+
+   No celular a barra cai para 4px, como na referência: a coluna dela some da
+   conta de largura, e no polegar de 4px o `border` de 2px não sobra nada — o
+   miolo continua sendo o que se vê. */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -1481,21 +1507,28 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  /* Roxa e sólida. Era um gradiente de índigo a ouro — e o ouro aparecia na
-     ponta da barra com uma cor que não existe em mais lugar nenhum da página. */
-  background: var(--accent);
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
   border-radius: var(--radius-pill);
   border: 2px solid transparent;
   background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  filter: brightness(1.15);
+  background: color-mix(in srgb, var(--accent) 50%, transparent);
+  background-clip: content-box;
 }
 
+/* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--accent) transparent;
+  scrollbar-color: color-mix(in srgb, var(--accent) 30%, transparent) transparent;
+}
+
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
 }
 
 /* 3. Ponto pulsante nos badges (eyebrows) */

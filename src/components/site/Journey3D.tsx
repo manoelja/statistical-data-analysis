@@ -347,18 +347,19 @@ export function Journey3D() {
           <p className="journey__prologue-eyebrow">SINASC · 2024 · {dataset.apgarValidos} APGAR válidos</p>
           <h2 className="journey__prologue-title">Do outro lado do horizonte</h2>
           <p className="journey__prologue-note">
-            A população é o buraco: só vemos a luz que escapa, e ela chega enviesada.
+            A tabela é a projeção da população: cada linha guarda o que caiu dentro dela, e o resto
+            some sem deixar rastro.
           </p>
         </div>
 
-        {/* placa do epílogo: o buraco branco fecha a viagem com a mesma frase
-            que o prólogo abriu — a mesma conta, ao contrário */}
+        {/* placa do epílogo: o buraco branco fecha a viagem invertendo a conta do
+            prólogo — projeção para um lado, problema inverso para o outro */}
         <div ref={epilogueRef} className="journey__prologue journey__epilogue" aria-hidden="true">
           <p className="journey__prologue-eyebrow">EPÍLOGO · A MESMA CONTA AO CONTRÁRIO</p>
-          <h2 className="journey__prologue-title">O buraco branco</h2>
+          <h2 className="journey__prologue-title">O espaço nulo da conta</h2>
           <p className="journey__prologue-note">
-            O buraco negro era o que só vemos da população. O buraco branco é a estimativa: o que se
-            reconstrói do que não escapou.
+            A conta de volta não tem unicidade: a mesma tabela cabe em infinitas populações. Quem
+            escolhe entre elas é o prior — e ele é nosso, não dos dados.
           </p>
         </div>
 
